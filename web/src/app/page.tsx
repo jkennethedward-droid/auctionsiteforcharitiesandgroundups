@@ -38,15 +38,22 @@ function getCountdownParts(ms: number) {
   };
 }
 
-function FlipTile(props: { value: string; label: string; flashKey: number }) {
-  const { value, label, flashKey } = props;
+function FlipTile(props: { value: string; label: string; animateEveryTick?: boolean }) {
+  const { value, label, animateEveryTick = false } = props;
   const [flipping, setFlipping] = useState(false);
+  const [tick, setTick] = useState(0);
 
   useEffect(() => {
     setFlipping(true);
     const t = window.setTimeout(() => setFlipping(false), 260);
     return () => window.clearTimeout(t);
-  }, [flashKey, value]);
+  }, [tick, value]);
+
+  useEffect(() => {
+    if (!animateEveryTick) return;
+    setTick((n) => n + 1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [animateEveryTick, value]);
 
   return (
     <div className="w-[72px] sm:w-[76px]">
@@ -84,7 +91,6 @@ export default function Home() {
   const [featured, setFeatured] = useState<ItemRow[]>([]);
   const [items, setItems] = useState<ItemRow[]>([]);
   const [nowTick, setNowTick] = useState(0);
-  const [countdownFlash, setCountdownFlash] = useState(false);
 
   const closeAtDate = useMemo(() => {
     const ts = auction.closeAt;
@@ -100,13 +106,6 @@ export default function Home() {
     const timer = window.setInterval(() => setNowTick((n) => n + 1), 1000);
     return () => window.clearInterval(timer);
   }, []);
-
-  useEffect(() => {
-    // Lightweight "tick" animation for countdown changes.
-    setCountdownFlash(true);
-    const t = window.setTimeout(() => setCountdownFlash(false), 180);
-    return () => window.clearTimeout(t);
-  }, [nowTick]);
 
   useEffect(() => {
     const unsub = subscribeFeaturedItems(setFeatured);
@@ -202,22 +201,19 @@ export default function Home() {
                           <FlipTile
                             value={countdownParts.days}
                             label="DAYS"
-                            flashKey={nowTick}
                           />
                           <FlipTile
                             value={countdownParts.hours}
                             label="HOURS"
-                            flashKey={nowTick}
                           />
                           <FlipTile
                             value={countdownParts.minutes}
                             label="MINUTES"
-                            flashKey={nowTick}
                           />
                           <FlipTile
                             value={countdownParts.seconds}
                             label="SECONDS"
-                            flashKey={nowTick}
+                            animateEveryTick
                           />
                         </>
                       ) : (
