@@ -49,16 +49,18 @@ function FlipTile(props: { value: string; label: string; flashKey: number }) {
   }, [flashKey, value]);
 
   return (
-    <div className="w-[78px] sm:w-[86px]">
-      <div className="relative overflow-hidden rounded-2xl bg-white/10 ring-1 ring-white/10 shadow-[0_10px_30px_rgba(0,0,0,0.20)]">
+    <div className="w-[72px] sm:w-[76px]">
+      <div className="relative overflow-hidden rounded-2xl bg-white/10 ring-1 ring-white/10 shadow-[0_10px_26px_rgba(0,0,0,0.18)]">
         {/* top half */}
-        <div className="h-10 sm:h-11 border-b border-white/10 bg-white/10" />
+        <div className="h-9 sm:h-10 border-b border-white/10 bg-white/10" />
         {/* bottom half */}
-        <div className="h-10 sm:h-11 bg-white/5" />
+        <div className="h-9 sm:h-10 bg-white/5" />
 
         {/* value */}
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-          <div className="text-2xl sm:text-3xl font-semibold tabular-nums text-white">{value}</div>
+          <div className="text-2xl sm:text-[28px] font-semibold tabular-nums text-white">
+            {value}
+          </div>
         </div>
 
         {/* flip overlay */}
@@ -181,7 +183,14 @@ export default function Home() {
               </div>
 
               <div className="rounded-2xl bg-white/6 p-5 ring-1 ring-white/10">
-                <div className="text-xs font-semibold text-white/80">Closes (SGT)</div>
+                <div className="text-[10px] font-semibold tracking-wide text-white/70">
+                  TOTAL RAISED
+                </div>
+                <div className="mt-1 text-2xl font-semibold text-white tabular-nums">
+                  ${Number(auction.totalRaised ?? 0).toFixed(0)}
+                </div>
+
+                <div className="mt-5 text-xs font-semibold text-white/80">Closes (SGT)</div>
                 {closeAtDate ? (
                   <>
                     <div className="mt-2 text-sm font-semibold text-white">
@@ -219,23 +228,6 @@ export default function Home() {
                 ) : (
                   <div className="mt-2 text-sm text-white/75">Close time not set yet.</div>
                 )}
-
-                <div className="mt-5 grid grid-cols-2 gap-3">
-                  <div className="rounded-xl bg-white/8 p-3 ring-1 ring-white/10">
-                    <div className="text-[10px] font-semibold tracking-wide text-white/70">
-                      ITEMS LIVE
-                    </div>
-                    <div className="mt-1 text-lg font-semibold text-white">{itemsCount}</div>
-                  </div>
-                  <div className="rounded-xl bg-white/8 p-3 ring-1 ring-white/10">
-                    <div className="text-[10px] font-semibold tracking-wide text-white/70">
-                      TOTAL RAISED
-                    </div>
-                    <div className="mt-1 text-lg font-semibold text-white">
-                      ${Number(auction.totalRaised ?? 0).toFixed(0)}
-                    </div>
-                  </div>
-                </div>
               </div>
             </div>
           </div>
@@ -283,7 +275,10 @@ export default function Home() {
         <section className="mt-12" id="items">
             <div className="flex items-end justify-between gap-4">
               <div>
-                <h2 className="text-lg font-semibold">Auction items</h2>
+                <h2 className="text-lg font-semibold">
+                  Auction items{" "}
+                  <span className="text-sm font-semibold text-slate-500">({itemsCount})</span>
+                </h2>
                 <p className="mt-1 text-sm text-slate-600">
                   {auction.status === "pre-launch"
                     ? "Preview the catalog. Prices appear when bidding opens."
