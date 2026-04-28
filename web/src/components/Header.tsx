@@ -12,11 +12,11 @@ export function Header() {
   const isToolsPage = pathname.startsWith("/admin") || pathname.startsWith("/staff");
 
   return (
-    <header className="w-full border-b border-stone-200 bg-white">
-      <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3 sm:px-6 sm:py-4">
+    <header className="w-full bg-[#0B1F3A] text-white">
+      <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3 sm:px-6 sm:py-4">
         <a href="/" className="flex items-center gap-3">
           {site?.logoUrl ? (
-            <div className="h-10 w-10 overflow-hidden rounded-xl bg-stone-50">
+            <div className="h-10 w-10 overflow-hidden rounded-xl bg-white/10 ring-1 ring-white/10">
               <Image
                 src={site.logoUrl}
                 alt="Logo"
@@ -26,23 +26,27 @@ export function Header() {
               />
             </div>
           ) : (
-            <div className="h-10 w-10 rounded-xl bg-[#FFF7ED]" />
+            <div className="h-10 w-10 rounded-xl bg-white/10 ring-1 ring-white/10" />
           )}
           <div className="min-w-0">
-            <div className="truncate text-sm font-semibold leading-5 text-stone-900">
+            <div className="truncate text-sm font-semibold leading-5 text-white">
               {site?.eventTitle || "Silent Auction"}
             </div>
             {site?.orgName ? (
-              <div className="truncate text-xs text-stone-500">{site.orgName}</div>
+              <div className="truncate text-xs text-white/70">{site.orgName}</div>
             ) : null}
           </div>
         </a>
 
-        {!isToolsPage ? (
-          <div className="flex shrink-0 items-center gap-2">
-            <NotificationsMenu />
-          </div>
-        ) : null}
+        <div className="flex shrink-0 items-center gap-2">
+          {!isToolsPage ? <NotificationsMenu /> : null}
+          <a
+            href="/login?returnTo=%2F"
+            className="inline-flex h-9 items-center justify-center rounded-full bg-[#F97316] px-4 text-sm font-semibold text-white hover:bg-[#EA580C]"
+          >
+            Join &amp; Bid
+          </a>
+        </div>
       </div>
     </header>
   );
