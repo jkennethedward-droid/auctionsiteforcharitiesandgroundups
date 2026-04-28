@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import { headers } from "next/headers";
 import ItemClient from "./ui";
-import { adminDb } from "@/lib/firebase/admin";
+import { getAdminDb } from "@/lib/firebase/admin";
 import { getSiteConfigServer } from "@/lib/siteConfigServer";
 
 type Params = { itemId: string };
@@ -24,7 +24,7 @@ export async function generateMetadata({
   try {
     const [site, itemSnap] = await Promise.all([
       getSiteConfigServer(),
-      adminDb.doc(`items/${itemId}`).get(),
+      getAdminDb().doc(`items/${itemId}`).get(),
     ]);
 
     const item = itemSnap.exists ? (itemSnap.data() as any) : null;

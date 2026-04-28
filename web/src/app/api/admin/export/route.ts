@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { adminAuth, adminDb } from "@/lib/firebase/admin";
+import { getAdminAuth, getAdminDb } from "@/lib/firebase/admin";
 
 export const runtime = "nodejs";
 
@@ -36,6 +36,8 @@ function toCsv(rows: Record<string, unknown>[]) {
 }
 
 export async function GET(req: Request) {
+  const adminAuth = getAdminAuth();
+  const adminDb = getAdminDb();
   const token = getBearerToken(req);
   if (!token) return jsonError("Missing Authorization Bearer token.", 401);
 

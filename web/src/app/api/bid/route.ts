@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { adminAuth, adminDb } from "@/lib/firebase/admin";
+import { getAdminAuth, getAdminDb } from "@/lib/firebase/admin";
 import { sendResendEmail } from "@/lib/resend";
 
 export const runtime = "nodejs";
@@ -74,6 +74,8 @@ function outbidHtml(args: {
 }
 
 export async function POST(req: Request) {
+  const adminAuth = getAdminAuth();
+  const adminDb = getAdminDb();
   const token = getBearerToken(req);
   if (!token) return jsonError("Missing Authorization Bearer token.", 401);
 

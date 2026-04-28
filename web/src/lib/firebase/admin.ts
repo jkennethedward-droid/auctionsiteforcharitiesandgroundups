@@ -8,6 +8,7 @@ function getServiceAccount() {
 }
 
 export function getAdminApp() {
+  // IMPORTANT: don't initialize at import-time (Vercel build collects page data).
   if (admin.apps.length) return admin.app();
 
   const serviceAccount = getServiceAccount();
@@ -16,8 +17,15 @@ export function getAdminApp() {
   });
 }
 
-export const adminApp = getAdminApp();
-export const adminAuth = adminApp.auth();
-export const adminDb = adminApp.firestore();
-export const adminStorage = adminApp.storage();
+export function getAdminAuth() {
+  return getAdminApp().auth();
+}
+
+export function getAdminDb() {
+  return getAdminApp().firestore();
+}
+
+export function getAdminStorage() {
+  return getAdminApp().storage();
+}
 

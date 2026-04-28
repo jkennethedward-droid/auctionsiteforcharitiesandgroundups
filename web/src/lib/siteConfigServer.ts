@@ -1,6 +1,6 @@
 import "server-only";
 
-import { adminDb } from "@/lib/firebase/admin";
+import { getAdminDb } from "@/lib/firebase/admin";
 import type { SiteConfig } from "@/lib/siteConfig";
 
 const FALLBACK_SITE: SiteConfig = {
@@ -13,7 +13,7 @@ const FALLBACK_SITE: SiteConfig = {
 
 export async function getSiteConfigServer(): Promise<SiteConfig> {
   try {
-    const snap = await adminDb.doc("config/site").get();
+    const snap = await getAdminDb().doc("config/site").get();
     if (!snap.exists) return FALLBACK_SITE;
     const data = snap.data() as Partial<SiteConfig>;
     return {

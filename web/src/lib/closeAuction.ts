@@ -1,6 +1,6 @@
 import "server-only";
 
-import { adminDb } from "@/lib/firebase/admin";
+import { getAdminDb } from "@/lib/firebase/admin";
 import { sendResendEmail } from "@/lib/resend";
 
 function winnerHtml(args: {
@@ -33,6 +33,7 @@ async function logFailedEmail(args: {
   itemTitle: string;
   errorMessage: string;
 }) {
+  const adminDb = getAdminDb();
   await adminDb.doc(`logs/failedEmails`).collection("entries").add({
     recipient: args.recipient,
     type: args.type,
@@ -44,6 +45,7 @@ async function logFailedEmail(args: {
 }
 
 export async function closeAuctionAndPublishWinners(opts?: { force?: boolean }) {
+  const adminDb = getAdminDb();
   const force = Boolean(opts?.force);
 
   const [auctionSnap, siteSnap] = await Promise.all([

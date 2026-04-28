@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { adminAuth } from "@/lib/firebase/admin";
+import { getAdminAuth } from "@/lib/firebase/admin";
 
 export const runtime = "nodejs";
 
@@ -20,6 +20,7 @@ type Body = {
 };
 
 export async function POST(req: Request) {
+  const adminAuth = getAdminAuth();
   const token = getBearerToken(req);
   if (!token) return jsonError("Missing Authorization Bearer token.", 401);
 
