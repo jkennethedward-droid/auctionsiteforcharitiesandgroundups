@@ -29,8 +29,12 @@ function formatCountdown(ms: number) {
   const hours = Math.floor((total % 86400) / 3600);
   const mins = Math.floor((total % 3600) / 60);
   const secs = total % 60;
-  if (days > 0) return `${days}d ${hours}h ${mins}m`;
-  return `${hours}h ${mins}m ${secs}s`;
+
+  const dd = String(days).padStart(2, "0");
+  const hh = String(hours).padStart(2, "0");
+  const mm = String(mins).padStart(2, "0");
+  const ss = String(secs).padStart(2, "0");
+  return `${dd}:${hh}:${mm}:${ss}`;
 }
 
 export default function Home() {
@@ -40,6 +44,7 @@ export default function Home() {
   const [featured, setFeatured] = useState<ItemRow[]>([]);
   const [items, setItems] = useState<ItemRow[]>([]);
   const [nowTick, setNowTick] = useState(0);
+  const [countdownFlash, setCountdownFlash] = useState(false);
 
   const closeAtDate = useMemo(() => {
     const ts = auction.closeAt;
@@ -55,6 +60,13 @@ export default function Home() {
     const timer = window.setInterval(() => setNowTick((n) => n + 1), 1000);
     return () => window.clearInterval(timer);
   }, []);
+
+  useEffect(() => {
+    // Lightweight "tick" animation for countdown changes.
+    setCountdownFlash(true);
+    const t = window.setTimeout(() => setCountdownFlash(false), 180);
+    return () => window.clearTimeout(t);
+  }, [nowTick]);
 
   useEffect(() => {
     const unsub = subscribeFeaturedItems(setFeatured);
@@ -95,9 +107,11 @@ export default function Home() {
                   {user ? (
                     <a
                       className="inline-flex h-11 items-center justify-center rounded-full bg-[#F97316] px-6 text-sm font-semibold text-white hover:bg-[#EA580C]"
-                      href="#items"
+                      href="https://www.ccsscares.sg/"
+                      target="_blank"
+                      rel="noopener noreferrer"
                     >
-                      View auction items →
+                      Learn More →
                     </a>
                   ) : (
                     <a
@@ -125,7 +139,11 @@ export default function Home() {
                     </div>
                     <div className="mt-2 text-sm text-white/75">
                       Time left:{" "}
-                      <span className="font-semibold text-white">
+                      <span
+                        className={`font-semibold text-white tabular-nums transition-transform duration-150 ${
+                          countdownFlash ? "scale-[1.03]" : "scale-100"
+                        }`}
+                      >
                         {timeLeftMs != null ? formatCountdown(timeLeftMs) : "—"}
                       </span>
                     </div>
