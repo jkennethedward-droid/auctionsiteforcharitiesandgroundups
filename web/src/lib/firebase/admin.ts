@@ -4,7 +4,14 @@ import { mustGetEnv } from "@/lib/env";
 
 function getServiceAccount() {
   const json = mustGetEnv("FIREBASE_SERVICE_ACCOUNT_KEY");
-  return JSON.parse(json);
+  try {
+    return JSON.parse(json);
+  } catch (e: any) {
+    // Common failure: env value was pasted with extra wrapping quotes.
+    // `mustGetEnv` already trims/dequotes, so if we still fail it's likely malformed JSON.
+    const msg = e?.message ? ` (${e.message})` : "";
+    throw new Error(`FIREBASE_SERVICE_ACCOUNT_KEY is not valid JSON${msg}`);
+  }
 }
 
 export function getAdminApp() {

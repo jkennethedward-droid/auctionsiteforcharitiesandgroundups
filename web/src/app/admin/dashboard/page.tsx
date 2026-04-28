@@ -570,16 +570,28 @@ export default function AdminDashboardPage() {
                     </div>
                   )}
                 </div>
-                <input
-                  className="mt-3 block w-full text-sm"
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => {
-                    const f = e.target.files?.[0];
-                    if (f) void uploadAndSave("logo", f);
-                  }}
-                  disabled={busySite}
-                />
+                <div className="mt-3 flex items-center gap-3">
+                  <input
+                    id="admin-logo-file"
+                    className="sr-only"
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) void uploadAndSave("logo", f);
+                      e.currentTarget.value = "";
+                    }}
+                    disabled={busySite}
+                  />
+                  <label
+                    htmlFor="admin-logo-file"
+                    className="inline-flex h-10 cursor-pointer items-center justify-center rounded-xl bg-[#F97316] px-4 text-sm font-semibold text-white hover:bg-[#EA580C] disabled:opacity-60"
+                    aria-disabled={busySite}
+                  >
+                    Choose logo…
+                  </label>
+                  <div className="text-xs text-stone-500">PNG/JPG/WEBP</div>
+                </div>
               </div>
 
               <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
@@ -599,17 +611,28 @@ export default function AdminDashboardPage() {
                     </div>
                   )}
                 </div>
-                <input
-                  className="mt-3 block w-full text-sm"
-                  type="file"
-                  accept="image/*,.ico"
-                  onChange={(e) => {
-                    const f = e.target.files?.[0];
-                    if (f) void uploadAndSave("favicon", f);
-                  }}
-                  disabled={busySite}
-                />
-                <div className="mt-2 text-xs text-stone-500">PNG/ICO recommended.</div>
+                <div className="mt-3 flex items-center gap-3">
+                  <input
+                    id="admin-favicon-file"
+                    className="sr-only"
+                    type="file"
+                    accept="image/*,.ico"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) void uploadAndSave("favicon", f);
+                      e.currentTarget.value = "";
+                    }}
+                    disabled={busySite}
+                  />
+                  <label
+                    htmlFor="admin-favicon-file"
+                    className="inline-flex h-10 cursor-pointer items-center justify-center rounded-xl border border-stone-200 bg-white px-4 text-sm font-semibold text-stone-900 hover:bg-stone-50"
+                    aria-disabled={busySite}
+                  >
+                    Choose favicon…
+                  </label>
+                  <div className="text-xs text-stone-500">PNG/ICO recommended.</div>
+                </div>
               </div>
             </div>
           </div>

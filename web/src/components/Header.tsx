@@ -4,12 +4,35 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useSiteConfig } from "@/components/SiteConfigProvider";
 import { NotificationsMenu } from "@/components/NotificationsMenu";
+import { useAuth } from "@/components/AuthProvider";
+import { getRoleClaim } from "@/lib/claims";
+import { useEffect, useState } from "react";
 
 export function Header() {
   const pathname = usePathname();
   const { site } = useSiteConfig();
+  const { user } = useAuth();
+  const [role, setRole] = useState<"admin" | "staff" | null>(null);
 
   const isToolsPage = pathname.startsWith("/admin") || pathname.startsWith("/staff");
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!user) {
+      setRole(null);
+      return;
+    }
+    getRoleClaim(user, false)
+      .then((r) => {
+        if (!cancelled) setRole(r);
+      })
+      .catch(() => {
+        if (!cancelled) setRole(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
 
   return (
     <header className="w-full bg-[#0B1F3A] text-white">
@@ -39,6 +62,14 @@ export function Header() {
         </a>
 
         <div className="flex shrink-0 items-center gap-2">
+          {role === "admin" ? (
+            <a
+              href="/admin/dashboard"
+              className="inline-flex h-9 items-center justify-center rounded-lg border border-white/15 bg-white/5 px-3 text-xs font-semibold text-white hover:bg-white/10"
+            >
+              Admin dashboard
+            </a>
+          ) : null}
           {!isToolsPage ? <NotificationsMenu /> : null}
         </div>
       </div>

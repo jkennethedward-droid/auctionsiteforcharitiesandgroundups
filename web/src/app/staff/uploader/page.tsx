@@ -185,14 +185,28 @@ export default function StaffUploaderPage() {
             <div className="mt-5 grid gap-4">
               <div>
                 <label className="text-sm font-medium">Photos (max 4)</label>
-                <input
-                  className="mt-2 block w-full text-sm"
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  multiple
-                  onChange={(e) => onPickFiles(e.target.files)}
-                  disabled={!canCreate || saving}
-                />
+                <div className="mt-2 flex items-center gap-3">
+                  <input
+                    id="staff-item-photos"
+                    className="sr-only"
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    multiple
+                    onChange={(e) => {
+                      void onPickFiles(e.target.files);
+                      e.currentTarget.value = "";
+                    }}
+                    disabled={!canCreate || saving}
+                  />
+                  <label
+                    htmlFor="staff-item-photos"
+                    className="inline-flex h-10 cursor-pointer items-center justify-center rounded-xl bg-[#F97316] px-4 text-sm font-semibold text-white hover:bg-[#EA580C] disabled:opacity-60"
+                    aria-disabled={!canCreate || saving}
+                  >
+                    Choose photos…
+                  </label>
+                  <div className="text-xs text-stone-500">JPEG/PNG/WEBP</div>
+                </div>
                 <p className="mt-2 text-xs text-stone-500">
                   Square (1:1), JPEG/PNG/WEBP, max 2MB each.
                 </p>
