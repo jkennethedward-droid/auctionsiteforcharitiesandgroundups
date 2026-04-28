@@ -29,7 +29,6 @@ export function unreadNotificationsQuery(uid: string) {
   return query(
     notificationsRef(uid),
     where("read", "==", false),
-    orderBy("createdAt", "desc"),
     limit(20),
   );
 }

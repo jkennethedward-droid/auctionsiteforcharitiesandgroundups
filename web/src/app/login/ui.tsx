@@ -15,6 +15,11 @@ import { useAuth } from "@/components/AuthProvider";
 const EMAIL_STORAGE_KEY = "gwh_login_email";
 const RETURN_TO_KEY = "gwh_return_to";
 
+function continueUrl(path: string) {
+  // Build a fully-qualified URL (required by Firebase email link auth).
+  return new URL(path, window.location.href).toString();
+}
+
 export default function LoginClient() {
   // Avoid initializing Firebase during server prerender/build.
   const firebaseAuth = useMemo(() => {
@@ -103,9 +108,7 @@ export default function LoginClient() {
     }
 
     const site = await getSiteConfig().catch(() => null);
-    const url = `${window.location.origin}/login?returnTo=${encodeURIComponent(
-      returnTo,
-    )}`;
+    const url = continueUrl(`/login?returnTo=${encodeURIComponent(returnTo)}`);
 
     await sendSignInLinkToEmail(firebaseAuth, trimmed, {
       url,

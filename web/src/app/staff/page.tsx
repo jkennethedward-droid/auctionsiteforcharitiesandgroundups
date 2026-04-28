@@ -11,6 +11,11 @@ import { getRoleClaim } from "@/lib/claims";
 
 const EMAIL_STORAGE_KEY = "gwh_staff_email";
 
+function continueUrl(path: string) {
+  // Build a fully-qualified URL (required by Firebase email link auth).
+  return new URL(path, window.location.href).toString();
+}
+
 function emailDomainAllowed(email: string, allowedDomains: string[]) {
   const lower = email.trim().toLowerCase();
   return allowedDomains.some((d) => lower.endsWith(d.toLowerCase()));
@@ -108,8 +113,7 @@ export default function StaffPage() {
     }
 
     try {
-      // Use the actual runtime origin to avoid env var mismatches.
-      const url = `${window.location.origin}/staff`;
+      const url = continueUrl("/staff");
       await sendSignInLinkToEmail(firebaseAuth, trimmed, { url, handleCodeInApp: true });
       window.localStorage.setItem(EMAIL_STORAGE_KEY, trimmed);
       setMessage("Staff login link sent. Check your inbox.");
