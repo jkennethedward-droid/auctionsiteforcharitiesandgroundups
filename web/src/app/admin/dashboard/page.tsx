@@ -35,6 +35,7 @@ export default function AdminDashboardPage() {
   const router = useRouter();
   const { user, loading } = useAuth();
   const [role, setRole] = useState<string | null>(null);
+  const [roleChecked, setRoleChecked] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [busyUid, setBusyUid] = useState<string | null>(null);
@@ -100,21 +101,37 @@ export default function AdminDashboardPage() {
   >([]);
 
   useEffect(() => {
-    if (!user) return;
-    getRoleClaim(user, true).then((r) => setRole(r));
+    let cancelled = false;
+    setRoleChecked(false);
+    if (!user) {
+      setRole(null);
+      setRoleChecked(true);
+      return;
+    }
+    getRoleClaim(user, true)
+      .then((r) => {
+        if (cancelled) return;
+        setRole(r);
+      })
+      .finally(() => {
+        if (!cancelled) setRoleChecked(true);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [user]);
 
   useEffect(() => {
     if (loading) return;
-    // Treat "can view /admin/dashboard while not admin" as a security issue: redirect.
     if (!user) {
       router.replace("/admin");
       return;
     }
-    if (role && role !== "admin") {
+    // Only redirect after role has been checked, so we don't accidentally treat "unknown" as "allowed".
+    if (roleChecked && role !== "admin") {
       router.replace("/admin");
     }
-  }, [loading, role, router, user]);
+  }, [loading, role, roleChecked, router, user]);
 
   useEffect(() => {
     if (!site) return;
@@ -148,9 +165,10 @@ export default function AdminDashboardPage() {
   }, [auction.closeAt, auction.status]);
 
   useEffect(() => {
+    if (role !== "admin") return;
     const unsub = subscribeAllItems(setItems);
     return () => unsub();
-  }, []);
+  }, [role]);
 
   useEffect(() => {
     if (!items.length) return;
@@ -336,6 +354,7 @@ export default function AdminDashboardPage() {
   }
 
   if (loading) return <div className="p-8 text-sm">Loading…</div>;
+  if (!roleChecked) return <div className="p-8 text-sm">Checking permissions…</div>;
   if (!user) return <div className="p-8 text-sm">Redirecting…</div>;
   if (role !== "admin") return <div className="p-8 text-sm">Redirecting…</div>;
 

@@ -22,7 +22,8 @@ export function Header() {
       setRole(null);
       return;
     }
-    getRoleClaim(user, false)
+    // Force refresh so we never show admin link from stale claims.
+    getRoleClaim(user, true)
       .then((r) => {
         if (!cancelled) setRole(r);
       })
