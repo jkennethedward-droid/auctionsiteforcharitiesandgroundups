@@ -3,18 +3,6 @@ import { getAuth, type Auth } from "firebase/auth";
 import { getFirestore, type Firestore } from "firebase/firestore";
 import { getStorage, type FirebaseStorage } from "firebase/storage";
 
-// Firebase "web app config" values are public identifiers (not secrets).
-// We still prefer env vars, but provide a safe fallback so the app can run
-// even if hosting env injection is misconfigured.
-const FALLBACK_FIREBASE_CONFIG = {
-  apiKey: "AIzaSyCYJAJISHAuT7xoxNnPctIY5dYDvzVYhgE",
-  authDomain: "auction-site-26.firebaseapp.com",
-  projectId: "auction-site-26",
-  storageBucket: "auction-site-26.firebasestorage.app",
-  messagingSenderId: "148389564320",
-  appId: "1:148389564320:web:e4353159a7cacc41ed5ec5",
-} as const;
-
 function cleanEnv(value: string | undefined): string {
   const v = (value ?? "").trim();
   // Remove accidental wrapping quotes from copy/paste.
@@ -36,8 +24,6 @@ function getFirebaseConfigOrNull() {
   );
   const NEXT_PUBLIC_FIREBASE_APP_ID = cleanEnv(process.env.NEXT_PUBLIC_FIREBASE_APP_ID);
 
-  // If ANY of the required vars are missing, fall back to the known public config.
-  // This avoids hard-crashing the site in production.
   if (
     !NEXT_PUBLIC_FIREBASE_API_KEY ||
     !NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN ||
@@ -46,7 +32,7 @@ function getFirebaseConfigOrNull() {
     !NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID ||
     !NEXT_PUBLIC_FIREBASE_APP_ID
   ) {
-    return FALLBACK_FIREBASE_CONFIG;
+    return null;
   }
 
   return {
@@ -70,8 +56,9 @@ export function getFirebaseApp(): FirebaseApp {
 
   const cfg = getFirebaseConfigOrNull();
   if (!cfg) {
-    // Should be impossible now that getFirebaseConfigOrNull falls back, but keep a clear error.
-    throw new Error("Firebase client config unavailable.");
+    throw new Error(
+      "Missing Firebase client env vars (NEXT_PUBLIC_FIREBASE_*). Set them in Vercel (Production + Preview) and redeploy.",
+    );
   }
 
   _app = initializeApp(cfg);
