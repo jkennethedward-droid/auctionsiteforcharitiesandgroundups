@@ -56,16 +56,16 @@ function FlipTile(props: { value: string; label: string; animateEveryTick?: bool
   }, [animateEveryTick, value]);
 
   return (
-    <div className="w-[72px] sm:w-[76px]">
-      <div className="relative overflow-hidden rounded-2xl bg-white/10 ring-1 ring-white/10 shadow-[0_10px_26px_rgba(0,0,0,0.18)]">
+    <div className="w-[56px] sm:w-[60px]">
+      <div className="relative overflow-hidden rounded-xl bg-white/10 ring-1 ring-white/10 shadow-[0_8px_22px_rgba(0,0,0,0.16)]">
         {/* top half */}
-        <div className="h-9 sm:h-10 border-b border-white/10 bg-white/10" />
+        <div className="h-7 sm:h-8 border-b border-white/10 bg-white/10" />
         {/* bottom half */}
-        <div className="h-9 sm:h-10 bg-white/5" />
+        <div className="h-7 sm:h-8 bg-white/5" />
 
         {/* value */}
         <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-          <div className="text-2xl sm:text-[28px] font-semibold tabular-nums text-white">
+          <div className="text-lg sm:text-xl font-semibold tabular-nums text-white">
             {value}
           </div>
         </div>
@@ -77,7 +77,7 @@ function FlipTile(props: { value: string; label: string; animateEveryTick?: bool
           }`}
         />
       </div>
-      <div className="mt-2 text-center text-[10px] font-semibold tracking-wide text-white/70">
+      <div className="mt-1.5 text-center text-[9px] font-semibold tracking-wide text-white/70">
         {label}
       </div>
     </div>
@@ -185,7 +185,7 @@ export default function Home() {
                 <div className="text-[10px] font-semibold tracking-wide text-white/70">
                   TOTAL RAISED
                 </div>
-                <div className="mt-1 text-2xl font-semibold text-white tabular-nums">
+                <div className="mt-1 text-[28px] font-semibold leading-none text-white tabular-nums">
                   ${Number(auction.totalRaised ?? 0).toFixed(0)}
                 </div>
 
@@ -195,7 +195,7 @@ export default function Home() {
                     <div className="mt-2 text-sm font-semibold text-white">
                       {formatSgtDate(closeAtDate)}
                     </div>
-                    <div className="mt-4 flex items-start justify-start gap-4 sm:gap-5">
+                    <div className="mt-3 flex items-start justify-start gap-2.5 sm:gap-3">
                       {countdownParts ? (
                         <>
                           <FlipTile
