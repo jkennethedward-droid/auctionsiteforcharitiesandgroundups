@@ -13,14 +13,16 @@ function getFirebaseConfigOrNull() {
     NEXT_PUBLIC_FIREBASE_APP_ID,
   } = process.env;
 
-  if (
-    !NEXT_PUBLIC_FIREBASE_API_KEY ||
-    !NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN ||
-    !NEXT_PUBLIC_FIREBASE_PROJECT_ID ||
-    !NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET ||
-    !NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID ||
-    !NEXT_PUBLIC_FIREBASE_APP_ID
-  ) {
+  const missing: string[] = [];
+  if (!NEXT_PUBLIC_FIREBASE_API_KEY) missing.push("NEXT_PUBLIC_FIREBASE_API_KEY");
+  if (!NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN) missing.push("NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN");
+  if (!NEXT_PUBLIC_FIREBASE_PROJECT_ID) missing.push("NEXT_PUBLIC_FIREBASE_PROJECT_ID");
+  if (!NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET) missing.push("NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET");
+  if (!NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID)
+    missing.push("NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID");
+  if (!NEXT_PUBLIC_FIREBASE_APP_ID) missing.push("NEXT_PUBLIC_FIREBASE_APP_ID");
+
+  if (missing.length) {
     return null;
   }
 
@@ -46,7 +48,27 @@ export function getFirebaseApp(): FirebaseApp {
   const cfg = getFirebaseConfigOrNull();
   if (!cfg) {
     // Don't crash during build/prerender. We'll error only if a client feature actually uses Firebase.
-    throw new Error("Missing Firebase client env vars (NEXT_PUBLIC_FIREBASE_*)");
+    // Provide a specific missing list to make Vercel config issues obvious.
+    const {
+      NEXT_PUBLIC_FIREBASE_API_KEY,
+      NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+      NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+      NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+      NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+      NEXT_PUBLIC_FIREBASE_APP_ID,
+    } = process.env;
+    const missing: string[] = [];
+    if (!NEXT_PUBLIC_FIREBASE_API_KEY) missing.push("NEXT_PUBLIC_FIREBASE_API_KEY");
+    if (!NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN) missing.push("NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN");
+    if (!NEXT_PUBLIC_FIREBASE_PROJECT_ID) missing.push("NEXT_PUBLIC_FIREBASE_PROJECT_ID");
+    if (!NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET) missing.push("NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET");
+    if (!NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID)
+      missing.push("NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID");
+    if (!NEXT_PUBLIC_FIREBASE_APP_ID) missing.push("NEXT_PUBLIC_FIREBASE_APP_ID");
+
+    throw new Error(
+      `Missing Firebase client env vars: ${missing.length ? missing.join(", ") : "(unknown)"}`,
+    );
   }
 
   _app = initializeApp(cfg);
