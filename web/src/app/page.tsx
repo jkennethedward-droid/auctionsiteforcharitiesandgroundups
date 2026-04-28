@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { useSiteConfig } from "@/components/SiteConfigProvider";
 import { useAuction } from "@/components/AuctionProvider";
+import { useAuth } from "@/components/AuthProvider";
 import { subscribeAllItems, subscribeFeaturedItems, type ItemRow } from "@/lib/items";
 
 function formatSgtDate(d: Date) {
@@ -35,6 +36,7 @@ function formatCountdown(ms: number) {
 export default function Home() {
   const { site, loading } = useSiteConfig();
   const { auction, loading: auctionLoading } = useAuction();
+  const { user } = useAuth();
   const [featured, setFeatured] = useState<ItemRow[]>([]);
   const [items, setItems] = useState<ItemRow[]>([]);
   const [nowTick, setNowTick] = useState(0);
@@ -60,12 +62,12 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    if (auction.status !== "open" && auction.status !== "closed") return;
     const unsub = subscribeAllItems(setItems);
     return () => unsub();
-  }, [auction.status]);
+  }, []);
 
-  const itemsCount = auction.status === "pre-launch" ? featured.length : items.length;
+  const itemsCount = items.length;
+  const showPrices = auction.status === "open" || auction.status === "closed";
 
   return (
     <div className="flex flex-1 justify-center bg-[#F5F7FB] text-[#0B1F3A]">
@@ -90,17 +92,24 @@ export default function Home() {
                 </p>
 
                 <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
-                  <a
-                    className="inline-flex h-11 items-center justify-center rounded-full bg-[#F97316] px-6 text-sm font-semibold text-white hover:bg-[#EA580C]"
-                    href="/login?returnTo=%2F"
-                  >
-                    Register &amp; Start Bidding →
-                  </a>
+                  {user ? (
+                    <a
+                      className="inline-flex h-11 items-center justify-center rounded-full bg-[#F97316] px-6 text-sm font-semibold text-white hover:bg-[#EA580C]"
+                      href="#items"
+                    >
+                      View auction items →
+                    </a>
+                  ) : (
+                    <a
+                      className="inline-flex h-11 items-center justify-center rounded-full bg-[#F97316] px-6 text-sm font-semibold text-white hover:bg-[#EA580C]"
+                      href="/login?returnTo=%2F"
+                    >
+                      Register &amp; Start Bidding →
+                    </a>
+                  )}
                   <a
                     className="inline-flex h-11 items-center justify-center rounded-full bg-white/10 px-6 text-sm font-semibold text-white ring-1 ring-white/10 hover:bg-white/15"
-                    href="/items"
-                    onClick={(e) => e.preventDefault()}
-                    aria-disabled
+                    href="#items"
                   >
                     View items
                   </a>
@@ -185,68 +194,85 @@ export default function Home() {
           </section>
         ) : null}
 
-        {auction.status === "open" ? (
-          <section className="mt-12">
+        <section className="mt-12" id="items">
             <div className="flex items-end justify-between gap-4">
               <div>
                 <h2 className="text-lg font-semibold">Auction items</h2>
                 <p className="mt-1 text-sm text-slate-600">
-                  Tap an item to view details and place a bid.
+                  {auction.status === "pre-launch"
+                    ? "Preview the catalog. Prices appear when bidding opens."
+                    : "Tap an item to view details and place a bid."}
                 </p>
               </div>
-              <a
-                className="hidden sm:inline-flex h-10 items-center justify-center rounded-full bg-[#0B1F3A] px-4 text-sm font-semibold text-white hover:bg-[#0A1A30]"
-                href="/login?returnTo=%2F"
-              >
-                Log in to bid
-              </a>
+              {!user ? (
+                <a
+                  className="hidden sm:inline-flex h-10 items-center justify-center rounded-full bg-[#0B1F3A] px-4 text-sm font-semibold text-white hover:bg-[#0A1A30]"
+                  href="/login?returnTo=%2F"
+                >
+                  Register / Log in
+                </a>
+              ) : null}
             </div>
 
             <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {items.map((it) => (
-                <a
-                  key={it.id}
-                  href={`/items/${it.id}`}
-                  className="group rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-100 transition-shadow hover:shadow-md"
-                >
-                  <div className="aspect-square overflow-hidden rounded-2xl bg-slate-100">
-                    {it.photoUrls?.[0] ? (
-                      <Image
-                        src={it.photoUrls[0]}
-                        alt={it.title}
-                        width={600}
-                        height={600}
-                        className="h-full w-full object-cover"
-                      />
-                    ) : null}
-                  </div>
-                  <div className="mt-4 flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <div className="truncate text-sm font-semibold text-slate-900">
-                        {it.title}
-                      </div>
-                      <div className="mt-1 text-xs text-slate-600">Uploaded by {it.uploaderName}</div>
+              {items.length ? (
+                items.map((it) => (
+                  <a
+                    key={it.id}
+                    href={`/items/${it.id}`}
+                    className="group rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-100 transition-shadow hover:shadow-md"
+                  >
+                    <div className="aspect-square overflow-hidden rounded-2xl bg-slate-100">
+                      {it.photoUrls?.[0] ? (
+                        <Image
+                          src={it.photoUrls[0]}
+                          alt={it.title}
+                          width={600}
+                          height={600}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : null}
                     </div>
-                    <div className="shrink-0 text-right">
-                      <div className="text-[10px] font-semibold tracking-wide text-slate-500">
-                        CURRENT BID
+                    <div className="mt-4 flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="truncate text-sm font-semibold text-slate-900">
+                          {it.title}
+                        </div>
+                        <div className="mt-1 text-xs text-slate-600">Uploaded by {it.uploaderName}</div>
                       </div>
-                      <div className="mt-1 text-sm font-semibold text-slate-900">
-                        ${Number(it.currentHighestBid ?? it.startingBid ?? 0).toFixed(0)}
-                      </div>
+                      {showPrices ? (
+                        <div className="shrink-0 text-right">
+                          <div className="text-[10px] font-semibold tracking-wide text-slate-500">
+                            CURRENT BID
+                          </div>
+                          <div className="mt-1 text-sm font-semibold text-slate-900">
+                            ${Number(it.currentHighestBid ?? it.startingBid ?? 0).toFixed(0)}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="shrink-0 text-right">
+                          <div className="text-[10px] font-semibold tracking-wide text-slate-500">
+                            STARTING BID
+                          </div>
+                          <div className="mt-1 text-sm font-semibold text-slate-900">—</div>
+                        </div>
+                      )}
                     </div>
-                  </div>
 
-                  <div className="mt-4">
-                    <div className="inline-flex h-10 w-full items-center justify-center rounded-full bg-[#0B1F3A] px-4 text-sm font-semibold text-white transition-colors group-hover:bg-[#0A1A30]">
-                      Bid now →
+                    <div className="mt-4">
+                      <div className="inline-flex h-10 w-full items-center justify-center rounded-full bg-[#0B1F3A] px-4 text-sm font-semibold text-white transition-colors group-hover:bg-[#0A1A30]">
+                        {showPrices ? "Bid now →" : "View details →"}
+                      </div>
                     </div>
-                  </div>
-                </a>
-              ))}
+                  </a>
+                ))
+              ) : (
+                <div className="col-span-full rounded-2xl bg-white p-6 text-sm text-slate-600 shadow-sm ring-1 ring-slate-100">
+                  No items yet. Add some in Staff Uploader (or run the dummy item seed script).
+                </div>
+              )}
             </div>
           </section>
-        ) : null}
 
         {auction.status === "closed" ? (
           <section className="mt-10 rounded-2xl bg-white p-8 shadow-sm">
@@ -301,14 +327,7 @@ export default function Home() {
           <footer className="mt-14 pb-10 text-xs text-slate-500">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div>All times shown in SGT (UTC+8).</div>
-              <div className="flex gap-4">
-                <a className="hover:underline" href="/staff">
-                  Staff login
-                </a>
-                <a className="hover:underline" href="/admin">
-                  Admin login
-                </a>
-              </div>
+              <div className="flex gap-4" />
             </div>
           </footer>
         ) : null}

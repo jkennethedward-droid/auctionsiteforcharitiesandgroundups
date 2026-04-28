@@ -41,10 +41,10 @@ export function Header() {
         <div className="flex shrink-0 items-center gap-2">
           {!isToolsPage ? <NotificationsMenu /> : null}
           <a
-            href="/login?returnTo=%2F"
+            href="/staff"
             className="inline-flex h-9 items-center justify-center rounded-full bg-[#F97316] px-4 text-sm font-semibold text-white hover:bg-[#EA580C]"
           >
-            Join &amp; Bid
+            Staff / Admin
           </a>
         </div>
       </div>

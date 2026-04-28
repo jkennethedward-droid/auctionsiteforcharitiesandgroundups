@@ -177,7 +177,15 @@ export default function StaffPage() {
   return (
     <div className="flex flex-1 items-center justify-center bg-[#FFF7ED] px-6 py-24 text-[#1C1917]">
       <main className="w-full max-w-lg rounded-2xl bg-white p-10 shadow-sm">
-        <h1 className="text-2xl font-semibold tracking-tight">Staff access</h1>
+        <div className="flex items-center justify-between gap-4">
+          <h1 className="text-2xl font-semibold tracking-tight">Staff access</h1>
+          <a
+            href="/admin"
+            className="text-sm font-semibold text-[#0B1F3A] hover:underline"
+          >
+            Admin login →
+          </a>
+        </div>
         <p className="mt-2 text-sm text-stone-600">
           Sign in with your work email. Your domain must be whitelisted.
         </p>
