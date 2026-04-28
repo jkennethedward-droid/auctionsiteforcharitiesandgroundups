@@ -34,7 +34,7 @@ function formatCountdown(ms: number) {
   const hh = String(hours).padStart(2, "0");
   const mm = String(mins).padStart(2, "0");
   const ss = String(secs).padStart(2, "0");
-  return `${dd}:${hh}:${mm}:${ss}`;
+  return `${dd}D ${hh}Hr ${mm}Mn ${ss}s`;
 }
 
 export default function Home() {
@@ -141,9 +141,9 @@ export default function Home() {
                     <div className="mt-2 text-sm text-white/75">
                       Time left:{" "}
                       <span
-                        className={`font-semibold text-white tabular-nums transition-transform duration-150 ${
+                        className={`relative inline-flex items-center rounded-xl px-3 py-1 font-semibold text-white tabular-nums ring-1 ring-white/10 transition-transform duration-150 ${
                           countdownFlash ? "scale-[1.03]" : "scale-100"
-                        }`}
+                        } bg-white/10 bg-[linear-gradient(to_right,rgba(255,255,255,0.16)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.16)_1px,transparent_1px)] bg-[size:14px_14px]`}
                       >
                         {timeLeftMs != null ? formatCountdown(timeLeftMs) : "—"}
                       </span>
