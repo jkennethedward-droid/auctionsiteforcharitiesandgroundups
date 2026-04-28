@@ -15,15 +15,26 @@ const FALLBACK_FIREBASE_CONFIG = {
   appId: "1:148389564320:web:e4353159a7cacc41ed5ec5",
 } as const;
 
+function cleanEnv(value: string | undefined): string {
+  const v = (value ?? "").trim();
+  // Remove accidental wrapping quotes from copy/paste.
+  const unwrapped =
+    (v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"))
+      ? v.slice(1, -1)
+      : v;
+  // Remove stray leading/trailing quotes.
+  return unwrapped.replace(/^["']+|["']+$/g, "").trim();
+}
+
 function getFirebaseConfigOrNull() {
-  const {
-    NEXT_PUBLIC_FIREBASE_API_KEY,
-    NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-    NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-    NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-    NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-    NEXT_PUBLIC_FIREBASE_APP_ID,
-  } = process.env;
+  const NEXT_PUBLIC_FIREBASE_API_KEY = cleanEnv(process.env.NEXT_PUBLIC_FIREBASE_API_KEY);
+  const NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN = cleanEnv(process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN);
+  const NEXT_PUBLIC_FIREBASE_PROJECT_ID = cleanEnv(process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID);
+  const NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET = cleanEnv(process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET);
+  const NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID = cleanEnv(
+    process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  );
+  const NEXT_PUBLIC_FIREBASE_APP_ID = cleanEnv(process.env.NEXT_PUBLIC_FIREBASE_APP_ID);
 
   // If ANY of the required vars are missing, fall back to the known public config.
   // This avoids hard-crashing the site in production.
