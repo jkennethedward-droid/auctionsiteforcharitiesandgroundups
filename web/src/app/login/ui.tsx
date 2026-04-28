@@ -103,7 +103,7 @@ export default function LoginClient() {
     }
 
     const site = await getSiteConfig().catch(() => null);
-    const url = `${process.env.NEXT_PUBLIC_APP_URL}/login?returnTo=${encodeURIComponent(
+    const url = `${window.location.origin}/login?returnTo=${encodeURIComponent(
       returnTo,
     )}`;
 

@@ -9,8 +9,7 @@ export function Header() {
   const pathname = usePathname();
   const { site } = useSiteConfig();
 
-  // Hide on admin/staff pages (they're desktop tools, keep UI clean).
-  if (pathname.startsWith("/admin") || pathname.startsWith("/staff")) return null;
+  const isToolsPage = pathname.startsWith("/admin") || pathname.startsWith("/staff");
 
   return (
     <header className="w-full border-b border-stone-200 bg-white">
@@ -39,9 +38,11 @@ export function Header() {
           </div>
         </a>
 
-        <div className="flex shrink-0 items-center gap-2">
-          <NotificationsMenu />
-        </div>
+        {!isToolsPage ? (
+          <div className="flex shrink-0 items-center gap-2">
+            <NotificationsMenu />
+          </div>
+        ) : null}
       </div>
     </header>
   );

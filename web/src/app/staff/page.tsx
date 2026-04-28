@@ -33,6 +33,7 @@ export default function StaffPage() {
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [stage, setStage] = useState<"request" | "finishing" | "profile" | "ready" | "pending">("request");
+  const [sendingLink, setSendingLink] = useState(false);
 
   const [name, setName] = useState("");
   const [department, setDepartment] = useState("");
@@ -92,21 +93,31 @@ export default function StaffPage() {
     }
     setError(null);
     setMessage(null);
+    setSendingLink(true);
 
     const trimmed = email.trim().toLowerCase();
     if (!trimmed) {
       setError("Enter your work email.");
+      setSendingLink(false);
       return;
     }
     if (!emailDomainAllowed(trimmed, allowedDomains)) {
       setError("This email is not authorised for staff access.");
+      setSendingLink(false);
       return;
     }
 
-    const url = `${process.env.NEXT_PUBLIC_APP_URL}/staff`;
-    await sendSignInLinkToEmail(firebaseAuth, trimmed, { url, handleCodeInApp: true });
-    window.localStorage.setItem(EMAIL_STORAGE_KEY, trimmed);
-    setMessage("Staff login link sent. Check your inbox.");
+    try {
+      // Use the actual runtime origin to avoid env var mismatches.
+      const url = `${window.location.origin}/staff`;
+      await sendSignInLinkToEmail(firebaseAuth, trimmed, { url, handleCodeInApp: true });
+      window.localStorage.setItem(EMAIL_STORAGE_KEY, trimmed);
+      setMessage("Staff login link sent. Check your inbox.");
+    } catch (e: any) {
+      setError(e?.message ?? "Failed to send staff login link.");
+    } finally {
+      setSendingLink(false);
+    }
   }
 
   async function saveStaffProfile() {
@@ -233,8 +244,9 @@ export default function StaffPage() {
             <button
               className="inline-flex h-11 w-full items-center justify-center rounded-xl bg-[#F97316] px-5 text-sm font-semibold text-white hover:bg-[#EA580C]"
               onClick={sendStaffLink}
+              disabled={sendingLink || stage === "finishing"}
             >
-              Send staff login link
+              {sendingLink ? "Sending…" : "Send staff login link"}
             </button>
           </div>
         )}
