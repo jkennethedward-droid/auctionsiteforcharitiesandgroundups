@@ -1,7 +1,13 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { isSignInWithEmailLink, sendSignInLinkToEmail, signInWithEmailLink, signOut } from "firebase/auth";
+import {
+  isSignInWithEmailLink,
+  sendSignInLinkToEmail,
+  signInWithEmailAndPassword,
+  signInWithEmailLink,
+  signOut,
+} from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { getFirebaseAuth } from "@/lib/firebase/client";
 import { getStaffDomains } from "@/lib/siteConfig";
@@ -39,6 +45,10 @@ export default function StaffPage() {
   const [message, setMessage] = useState<string | null>(null);
   const [stage, setStage] = useState<"request" | "finishing" | "profile" | "ready" | "pending">("request");
   const [sendingLink, setSendingLink] = useState(false);
+  const [mode, setMode] = useState<"staff" | "admin">("staff");
+  const [adminEmail, setAdminEmail] = useState("");
+  const [adminPassword, setAdminPassword] = useState("");
+  const [adminBusy, setAdminBusy] = useState(false);
 
   const [name, setName] = useState("");
   const [department, setDepartment] = useState("");
@@ -174,21 +184,57 @@ export default function StaffPage() {
     setError(null);
   }
 
+  async function adminLogin() {
+    if (!firebaseAuth) {
+      setError("Site is missing Firebase config. Ask admin to set NEXT_PUBLIC_FIREBASE_* in Vercel.");
+      return;
+    }
+    setError(null);
+    setMessage(null);
+    setAdminBusy(true);
+    try {
+      const cred = await signInWithEmailAndPassword(firebaseAuth, adminEmail.trim(), adminPassword);
+      const role = await getRoleClaim(cred.user, true);
+      if (role !== "admin") {
+        await signOut(firebaseAuth);
+        throw new Error("This account is not authorised as admin.");
+      }
+      router.replace("/admin/dashboard");
+    } catch (e: any) {
+      setError(e?.message ?? "Admin login failed.");
+    } finally {
+      setAdminBusy(false);
+    }
+  }
+
   return (
     <div className="flex flex-1 items-center justify-center bg-[#FFF7ED] px-6 py-24 text-[#1C1917]">
       <main className="w-full max-w-lg rounded-2xl bg-white p-10 shadow-sm">
-        <div className="flex items-center justify-between gap-4">
-          <h1 className="text-2xl font-semibold tracking-tight">Staff access</h1>
-          <a
-            href="/admin"
-            className="text-sm font-semibold text-[#0B1F3A] hover:underline"
-          >
-            Admin login →
-          </a>
-        </div>
+        <h1 className="text-2xl font-semibold tracking-tight">Staff / Admin</h1>
         <p className="mt-2 text-sm text-stone-600">
           Sign in with your work email. Your domain must be whitelisted.
         </p>
+
+        <div className="mt-6 grid grid-cols-2 gap-2 rounded-2xl bg-stone-50 p-1 text-sm">
+          <button
+            type="button"
+            onClick={() => setMode("staff")}
+            className={`h-10 rounded-xl font-semibold ${
+              mode === "staff" ? "bg-white shadow-sm" : "text-stone-600 hover:text-stone-900"
+            }`}
+          >
+            Staff
+          </button>
+          <button
+            type="button"
+            onClick={() => setMode("admin")}
+            className={`h-10 rounded-xl font-semibold ${
+              mode === "admin" ? "bg-white shadow-sm" : "text-stone-600 hover:text-stone-900"
+            }`}
+          >
+            Admin
+          </button>
+        </div>
 
         {error ? (
           <div className="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -201,7 +247,38 @@ export default function StaffPage() {
           </div>
         ) : null}
 
-        {stage === "profile" ? (
+        {mode === "admin" ? (
+          <div className="mt-6 space-y-4">
+            <div>
+              <label className="text-sm font-medium">Admin email</label>
+              <input
+                className="mt-1 w-full rounded-xl border border-stone-200 px-3 py-2 outline-none focus:border-[#F97316]"
+                value={adminEmail}
+                onChange={(e) => setAdminEmail(e.target.value)}
+                type="email"
+                autoComplete="email"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium">Password</label>
+              <input
+                className="mt-1 w-full rounded-xl border border-stone-200 px-3 py-2 outline-none focus:border-[#F97316]"
+                value={adminPassword}
+                onChange={(e) => setAdminPassword(e.target.value)}
+                type="password"
+                autoComplete="current-password"
+              />
+            </div>
+            <button
+              className="inline-flex h-11 w-full items-center justify-center rounded-xl bg-[#F97316] px-5 text-sm font-semibold text-white hover:bg-[#EA580C] disabled:opacity-60"
+              onClick={adminLogin}
+              disabled={adminBusy}
+              type="button"
+            >
+              {adminBusy ? "Signing in…" : "Sign in as admin"}
+            </button>
+          </div>
+        ) : stage === "profile" ? (
           <div className="mt-6 space-y-4">
             <div>
               <label className="text-sm font-medium">Name</label>

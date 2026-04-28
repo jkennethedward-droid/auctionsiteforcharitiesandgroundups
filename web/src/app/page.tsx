@@ -327,7 +327,11 @@ export default function Home() {
           <footer className="mt-14 pb-10 text-xs text-slate-500">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div>All times shown in SGT (UTC+8).</div>
-              <div className="flex gap-4" />
+              <div className="flex gap-4">
+                <a className="hover:underline" href="/staff">
+                  Staff login
+                </a>
+              </div>
             </div>
           </footer>
         ) : null}
