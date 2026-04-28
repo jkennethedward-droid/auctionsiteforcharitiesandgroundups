@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { getRoleClaim } from "@/lib/claims";
 import { useAuction } from "@/components/AuctionProvider";
-import { firestore } from "@/lib/firebase/client";
+import { getFirestoreDb } from "@/lib/firebase/client";
 import { addDoc, collection, onSnapshot, orderBy, query, serverTimestamp, updateDoc, where } from "firebase/firestore";
 import type { Item } from "@/lib/items";
 import { uploadItemImage, validateSquareImageFile } from "@/lib/uploads";
@@ -36,6 +36,7 @@ export default function StaffUploaderPage() {
 
   useEffect(() => {
     if (!user) return;
+    const firestore = getFirestoreDb();
     const q = query(
       collection(firestore, "items"),
       where("uploaderUid", "==", user.uid),
@@ -102,6 +103,7 @@ export default function StaffUploaderPage() {
     setSaving(true);
     try {
       // Create Firestore doc first to get itemId.
+      const firestore = getFirestoreDb();
       const docRef = await addDoc(collection(firestore, "items"), {
         title: t,
         description: description.trim(),

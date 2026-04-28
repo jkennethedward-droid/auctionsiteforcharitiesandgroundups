@@ -7,7 +7,7 @@ import {
   browserLocalPersistence,
 } from "firebase/auth";
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { firebaseAuth } from "@/lib/firebase/client";
+import { getFirebaseAuth } from "@/lib/firebase/client";
 
 type AuthContextValue = {
   user: User | null;
@@ -21,6 +21,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const firebaseAuth = getFirebaseAuth();
     // Ensures session persists across refreshes.
     setPersistence(firebaseAuth, browserLocalPersistence).catch(() => {
       // Ignore (Safari private mode etc). Firebase will fallback.

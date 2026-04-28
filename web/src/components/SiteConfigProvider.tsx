@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { doc, onSnapshot } from "firebase/firestore";
-import { firestore } from "@/lib/firebase/client";
+import { getFirestoreDb } from "@/lib/firebase/client";
 import type { SiteConfig } from "@/lib/siteConfig";
 
 type SiteConfigContextValue = {
@@ -25,6 +25,7 @@ export function SiteConfigProvider({ children }: { children: React.ReactNode }) 
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const firestore = getFirestoreDb();
     const ref = doc(firestore, "config", "site");
     const unsub = onSnapshot(
       ref,

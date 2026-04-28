@@ -3,11 +3,12 @@
 import { useEffect, useState } from "react";
 import { signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
-import { firebaseAuth } from "@/lib/firebase/client";
+import { getFirebaseAuth } from "@/lib/firebase/client";
 import { useAuth } from "@/components/AuthProvider";
 import { getRoleClaim } from "@/lib/claims";
 
 export default function AdminPage() {
+  const firebaseAuth = getFirebaseAuth();
   const router = useRouter();
   const { user, loading } = useAuth();
   const [email, setEmail] = useState("");

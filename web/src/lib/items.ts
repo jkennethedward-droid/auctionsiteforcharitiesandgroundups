@@ -7,7 +7,7 @@ import {
   where,
   type Unsubscribe,
 } from "firebase/firestore";
-import { firestore } from "@/lib/firebase/client";
+import { getFirestoreDb } from "@/lib/firebase/client";
 
 export type Item = {
   title: string;
@@ -24,6 +24,7 @@ export type Item = {
 export type ItemRow = { id: string } & Item;
 
 export function subscribeFeaturedItems(cb: (items: ItemRow[]) => void): Unsubscribe {
+  const firestore = getFirestoreDb();
   const q = query(
     collection(firestore, "items"),
     where("isFeatured", "==", true),
@@ -42,6 +43,7 @@ export function subscribeFeaturedItems(cb: (items: ItemRow[]) => void): Unsubscr
 }
 
 export function subscribeAllItems(cb: (items: ItemRow[]) => void): Unsubscribe {
+  const firestore = getFirestoreDb();
   const q = query(collection(firestore, "items"), orderBy("createdAt", "desc"), limit(200));
   return onSnapshot(
     q,

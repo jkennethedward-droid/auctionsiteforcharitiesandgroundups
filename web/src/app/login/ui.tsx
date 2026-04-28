@@ -7,7 +7,7 @@ import {
   sendSignInLinkToEmail,
   signInWithEmailLink,
 } from "firebase/auth";
-import { firebaseAuth } from "@/lib/firebase/client";
+import { getFirebaseAuth } from "@/lib/firebase/client";
 import { getSiteConfig } from "@/lib/siteConfig";
 import { getUserProfile, upsertUserProfile } from "@/lib/users";
 import { useAuth } from "@/components/AuthProvider";
@@ -16,6 +16,7 @@ const EMAIL_STORAGE_KEY = "gwh_login_email";
 const RETURN_TO_KEY = "gwh_return_to";
 
 export default function LoginClient() {
+  const firebaseAuth = getFirebaseAuth();
   const { user, loading } = useAuth();
   const searchParams = useSearchParams();
   const returnTo = useMemo(() => searchParams.get("returnTo") ?? "/", [searchParams]);

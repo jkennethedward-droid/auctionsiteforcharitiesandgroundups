@@ -1,5 +1,5 @@
 import { doc, getDoc } from "firebase/firestore";
-import { firestore } from "@/lib/firebase/client";
+import { getFirestoreDb } from "@/lib/firebase/client";
 
 export type SiteConfig = {
   orgName: string;
@@ -10,7 +10,7 @@ export type SiteConfig = {
 };
 
 export async function getSiteConfig(): Promise<SiteConfig> {
-  const ref = doc(firestore, "config", "site");
+  const ref = doc(getFirestoreDb(), "config", "site");
   const snap = await getDoc(ref);
   if (!snap.exists()) throw new Error("Missing Firestore doc: config/site");
 
@@ -25,7 +25,7 @@ export async function getSiteConfig(): Promise<SiteConfig> {
 }
 
 export async function getStaffDomains(): Promise<string[]> {
-  const ref = doc(firestore, "config", "staffDomains");
+  const ref = doc(getFirestoreDb(), "config", "staffDomains");
   const snap = await getDoc(ref);
   if (!snap.exists()) return [];
   const data = snap.data() as { domains?: unknown };

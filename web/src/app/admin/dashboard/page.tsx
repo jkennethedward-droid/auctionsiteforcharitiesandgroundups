@@ -16,7 +16,7 @@ import {
   updateDoc,
   where,
 } from "firebase/firestore";
-import { firestore } from "@/lib/firebase/client";
+import { getFirestoreDb } from "@/lib/firebase/client";
 import { useSiteConfig } from "@/components/SiteConfigProvider";
 import { uploadBrandAsset } from "@/lib/uploads";
 import { useAuction } from "@/components/AuctionProvider";
@@ -132,6 +132,7 @@ export default function AdminDashboardPage() {
   }, [items, selectedBidItemId]);
 
   useEffect(() => {
+    const firestore = getFirestoreDb();
     if (!selectedBidItemId) {
       setBids([]);
       return;
@@ -169,6 +170,7 @@ export default function AdminDashboardPage() {
   }, [selectedBidItemId]);
 
   useEffect(() => {
+    const firestore = getFirestoreDb();
     if (role !== "admin") return;
     const q = query(
       collection(firestore, "logs", "failedEmails", "entries"),
@@ -198,6 +200,7 @@ export default function AdminDashboardPage() {
   }, [role]);
 
   useEffect(() => {
+    const firestore = getFirestoreDb();
     if (role !== "admin") return;
     const q = query(
       collection(firestore, "bids"),
@@ -238,6 +241,7 @@ export default function AdminDashboardPage() {
   }, [closeAtLocalSgt]);
 
   useEffect(() => {
+    const firestore = getFirestoreDb();
     if (!user) return;
     if (role !== "admin") return;
 
@@ -302,6 +306,7 @@ export default function AdminDashboardPage() {
     setMessage(null);
     setBusyAuction(true);
     try {
+      const firestore = getFirestoreDb();
       const ref = doc(firestore, "config", "auction");
       const closeAtDate = closeAtLocalSgt ? new Date(`${closeAtLocalSgt}:00+08:00`) : null;
       if (closeAtLocalSgt && (!closeAtDate || Number.isNaN(closeAtDate.getTime()))) {
@@ -328,6 +333,7 @@ export default function AdminDashboardPage() {
     setError(null);
     setMessage(null);
     try {
+      const firestore = getFirestoreDb();
       await updateDoc(doc(firestore, "items", itemId), { isFeatured: next });
       setMessage(next ? "Marked as featured." : "Removed from featured.");
     } catch (e: any) {
@@ -418,6 +424,7 @@ export default function AdminDashboardPage() {
     setMessage(null);
     setBusySite(true);
     try {
+      const firestore = getFirestoreDb();
       const ref = doc(firestore, "config", "site");
       await setDoc(
         ref,
@@ -441,6 +448,7 @@ export default function AdminDashboardPage() {
     setMessage(null);
     setBusySite(true);
     try {
+      const firestore = getFirestoreDb();
       const url = await uploadBrandAsset({ kind, file });
       const ref = doc(firestore, "config", "site");
       await setDoc(ref, kind === "logo" ? { logoUrl: url } : { faviconUrl: url }, { merge: true });

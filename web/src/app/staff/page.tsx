@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { isSignInWithEmailLink, sendSignInLinkToEmail, signInWithEmailLink, signOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
-import { firebaseAuth } from "@/lib/firebase/client";
+import { getFirebaseAuth } from "@/lib/firebase/client";
 import { getStaffDomains } from "@/lib/siteConfig";
 import { upsertUserProfile } from "@/lib/users";
 import { useAuth } from "@/components/AuthProvider";
@@ -17,6 +17,7 @@ function emailDomainAllowed(email: string, allowedDomains: string[]) {
 }
 
 export default function StaffPage() {
+  const firebaseAuth = getFirebaseAuth();
   const router = useRouter();
   const { user, loading } = useAuth();
   const [email, setEmail] = useState("");

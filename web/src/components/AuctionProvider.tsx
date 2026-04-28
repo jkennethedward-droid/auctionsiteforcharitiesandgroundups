@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { doc, onSnapshot } from "firebase/firestore";
-import { firestore } from "@/lib/firebase/client";
+import { getFirestoreDb } from "@/lib/firebase/client";
 import type { AuctionConfig } from "@/lib/auction";
 import { DEFAULT_AUCTION } from "@/lib/auction";
 
@@ -18,6 +18,7 @@ export function AuctionProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const firestore = getFirestoreDb();
     const ref = doc(firestore, "config", "auction");
     const unsub = onSnapshot(
       ref,

@@ -1,7 +1,7 @@
 "use client";
 
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
-import { storage } from "@/lib/firebase/client";
+import { getFirebaseStorage } from "@/lib/firebase/client";
 
 export type ImageValidationResult =
   | { ok: true }
@@ -48,6 +48,7 @@ export async function uploadItemImage(args: {
   file: File;
 }): Promise<string> {
   const { uploaderUid, itemId, index, file } = args;
+  const storage = getFirebaseStorage();
   const ext = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
   const path = `items/${itemId}/${uploaderUid}_${index}.${ext}`;
 
@@ -61,6 +62,7 @@ export async function uploadBrandAsset(args: {
   file: File;
 }): Promise<string> {
   const { kind, file } = args;
+  const storage = getFirebaseStorage();
 
   // Allow favicon ICO too.
   const allowed = ["image/jpeg", "image/png", "image/webp", "image/x-icon", "image/vnd.microsoft.icon"];

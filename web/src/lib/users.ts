@@ -1,5 +1,5 @@
 import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
-import { firestore } from "@/lib/firebase/client";
+import { getFirestoreDb } from "@/lib/firebase/client";
 
 export type UserProfile = {
   name: string;
@@ -11,7 +11,7 @@ export type UserProfile = {
 };
 
 export async function getUserProfile(uid: string): Promise<UserProfile | null> {
-  const ref = doc(firestore, "users", uid);
+  const ref = doc(getFirestoreDb(), "users", uid);
   const snap = await getDoc(ref);
   if (!snap.exists()) return null;
   return snap.data() as UserProfile;
@@ -21,7 +21,7 @@ export async function upsertUserProfile(
   uid: string,
   profile: Omit<UserProfile, "createdAt">,
 ) {
-  const ref = doc(firestore, "users", uid);
+  const ref = doc(getFirestoreDb(), "users", uid);
   await setDoc(
     ref,
     {

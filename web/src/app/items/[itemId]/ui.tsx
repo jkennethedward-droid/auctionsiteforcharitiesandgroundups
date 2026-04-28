@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { doc, onSnapshot } from "firebase/firestore";
-import { firestore } from "@/lib/firebase/client";
+import { getFirestoreDb } from "@/lib/firebase/client";
 import type { Item } from "@/lib/items";
 import { useAuction } from "@/components/AuctionProvider";
 import { useSiteConfig } from "@/components/SiteConfigProvider";
@@ -31,6 +31,7 @@ export default function ItemClient() {
   const [shareToast, setShareToast] = useState<string | null>(null);
 
   useEffect(() => {
+    const firestore = getFirestoreDb();
     const ref = doc(firestore, "items", itemId);
     const unsub = onSnapshot(
       ref,

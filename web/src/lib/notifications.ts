@@ -6,12 +6,11 @@ import {
   limit,
   orderBy,
   query,
-  updateDoc,
   where,
   writeBatch,
   type Timestamp,
 } from "firebase/firestore";
-import { firestore } from "@/lib/firebase/client";
+import { getFirestoreDb } from "@/lib/firebase/client";
 
 export type NotificationRow = {
   id: string;
@@ -23,7 +22,7 @@ export type NotificationRow = {
 };
 
 export function notificationsRef(uid: string) {
-  return collection(firestore, "users", uid, "notifications");
+  return collection(getFirestoreDb(), "users", uid, "notifications");
 }
 
 export function unreadNotificationsQuery(uid: string) {
@@ -40,6 +39,7 @@ export function recentNotificationsQuery(uid: string) {
 }
 
 export async function markAllNotificationsRead(uid: string) {
+  const firestore = getFirestoreDb();
   const q = unreadNotificationsQuery(uid);
   const snap = await getDocs(q);
   if (snap.empty) return;

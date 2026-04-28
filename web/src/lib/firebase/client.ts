@@ -1,9 +1,9 @@
-import { initializeApp, getApps, getApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
-import { getStorage } from "firebase/storage";
+import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app";
+import { getAuth, type Auth } from "firebase/auth";
+import { getFirestore, type Firestore } from "firebase/firestore";
+import { getStorage, type FirebaseStorage } from "firebase/storage";
 
-function getFirebaseConfig() {
+function getFirebaseConfigOrNull() {
   const {
     NEXT_PUBLIC_FIREBASE_API_KEY,
     NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -21,7 +21,7 @@ function getFirebaseConfig() {
     !NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID ||
     !NEXT_PUBLIC_FIREBASE_APP_ID
   ) {
-    throw new Error("Missing Firebase client env vars (NEXT_PUBLIC_FIREBASE_*)");
+    return null;
   }
 
   return {
@@ -34,8 +34,34 @@ function getFirebaseConfig() {
   };
 }
 
-export const firebaseApp = getApps().length ? getApp() : initializeApp(getFirebaseConfig());
-export const firebaseAuth = getAuth(firebaseApp);
-export const firestore = getFirestore(firebaseApp);
-export const storage = getStorage(firebaseApp);
+let _app: FirebaseApp | null = null;
+
+export function getFirebaseApp(): FirebaseApp {
+  if (_app) return _app;
+  if (getApps().length) {
+    _app = getApp();
+    return _app;
+  }
+
+  const cfg = getFirebaseConfigOrNull();
+  if (!cfg) {
+    // Don't crash during build/prerender. We'll error only if a client feature actually uses Firebase.
+    throw new Error("Missing Firebase client env vars (NEXT_PUBLIC_FIREBASE_*)");
+  }
+
+  _app = initializeApp(cfg);
+  return _app;
+}
+
+export function getFirebaseAuth(): Auth {
+  return getAuth(getFirebaseApp());
+}
+
+export function getFirestoreDb(): Firestore {
+  return getFirestore(getFirebaseApp());
+}
+
+export function getFirebaseStorage(): FirebaseStorage {
+  return getStorage(getFirebaseApp());
+}
 
