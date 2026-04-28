@@ -80,6 +80,7 @@ export default function Home() {
 
   const itemsCount = items.length;
   const showPrices = auction.status === "open" || auction.status === "closed";
+  const incrementLabel = "+$5.00";
 
   return (
     <div className="flex flex-1 justify-center bg-[#F5F7FB] text-[#0B1F3A]">
@@ -251,35 +252,37 @@ export default function Home() {
                         />
                       ) : null}
                     </div>
-                    <div className="mt-4 flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="truncate text-sm font-semibold text-slate-900">
-                          {it.title}
-                        </div>
-                        <div className="mt-1 text-xs text-slate-600">Uploaded by {it.uploaderName}</div>
+                    <div className="mt-4">
+                      <div className="text-sm font-semibold text-slate-900">{it.title}</div>
+                      <div className="mt-1 line-clamp-2 text-xs leading-5 text-slate-600">
+                        {it.description || " "}
                       </div>
-                      {showPrices ? (
-                        <div className="shrink-0 text-right">
+
+                      <div className="mt-4 grid grid-cols-2 overflow-hidden rounded-xl bg-slate-50 ring-1 ring-slate-100">
+                        <div className="p-3">
                           <div className="text-[10px] font-semibold tracking-wide text-slate-500">
                             CURRENT BID
                           </div>
-                          <div className="mt-1 text-sm font-semibold text-slate-900">
-                            ${Number(it.currentHighestBid ?? it.startingBid ?? 0).toFixed(0)}
+                          <div className="mt-1 text-lg font-semibold text-slate-900 tabular-nums">
+                            {showPrices
+                              ? `$${Number(it.currentHighestBid ?? it.startingBid ?? 0).toFixed(0)}`
+                              : "—"}
                           </div>
                         </div>
-                      ) : (
-                        <div className="shrink-0 text-right">
+                        <div className="border-l border-slate-100 p-3">
                           <div className="text-[10px] font-semibold tracking-wide text-slate-500">
-                            STARTING BID
+                            INCREMENT
                           </div>
-                          <div className="mt-1 text-sm font-semibold text-slate-900">—</div>
+                          <div className="mt-1 text-lg font-semibold text-[#F97316] tabular-nums">
+                            {incrementLabel}
+                          </div>
                         </div>
-                      )}
+                      </div>
                     </div>
 
                     <div className="mt-4">
                       <div className="inline-flex h-10 w-full items-center justify-center rounded-full bg-[#0B1F3A] px-4 text-sm font-semibold text-white transition-colors group-hover:bg-[#0A1A30]">
-                        {showPrices ? "Bid now →" : "View details →"}
+                        {showPrices ? "Bid Now" : "View details"}
                       </div>
                     </div>
                   </a>

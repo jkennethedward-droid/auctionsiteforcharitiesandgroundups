@@ -29,6 +29,8 @@ export default function ItemClient() {
   const [banner, setBanner] = useState<string | null>(null);
   const [shareOpen, setShareOpen] = useState(false);
   const [shareToast, setShareToast] = useState<string | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmBusy, setConfirmBusy] = useState(false);
 
   useEffect(() => {
     const firestore = getFirestoreDb();
@@ -93,7 +95,11 @@ export default function ItemClient() {
     return `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(itemUrl)}`;
   }, [itemUrl]);
 
-  async function handlePlaceBid() {
+  function bidderDisplayName() {
+    return user?.displayName || user?.email || "there";
+  }
+
+  async function submitBid() {
     setError(null);
     setBanner(null);
 
@@ -114,6 +120,7 @@ export default function ItemClient() {
       return;
     }
 
+    setConfirmBusy(true);
     try {
       const idToken = await user.getIdToken();
       const res = await fetch("/api/bid", {
@@ -132,9 +139,35 @@ export default function ItemClient() {
       }
 
       setBanner(`Your bid of $${amount} has been placed!`);
+      setConfirmOpen(false);
     } catch (e: any) {
       setError(e?.message ?? "Failed to place bid.");
+    } finally {
+      setConfirmBusy(false);
     }
+  }
+
+  function openConfirm() {
+    setError(null);
+    setBanner(null);
+
+    if (auction.status !== "open") {
+      setError("Auction has closed.");
+      return;
+    }
+
+    const amount = typeof bidAmount === "number" ? bidAmount : NaN;
+    if (!Number.isFinite(amount)) return setError("Enter a bid amount.");
+    if (amount < minBid) return setError(`Minimum bid is $${minBid}.`);
+
+    if (authLoading) return;
+    if (!user) {
+      window.localStorage.setItem(BID_AMOUNT_KEY, String(amount));
+      router.push(`/login?returnTo=${encodeURIComponent(`/items/${itemId}`)}`);
+      return;
+    }
+
+    setConfirmOpen(true);
   }
 
   async function copyLink() {
@@ -289,7 +322,7 @@ export default function ItemClient() {
                     />
                     <button
                       className="inline-flex h-11 shrink-0 items-center justify-center rounded-xl bg-[#F97316] px-5 text-sm font-semibold text-white hover:bg-[#EA580C]"
-                      onClick={handlePlaceBid}
+                      onClick={openConfirm}
                       type="button"
                     >
                       Place Bid
@@ -319,6 +352,39 @@ export default function ItemClient() {
           </section>
         </div>
       </main>
+
+      {confirmOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4">
+          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
+            <div className="text-xs font-semibold text-stone-500">Confirm bid</div>
+            <h3 className="mt-2 text-lg font-semibold">Please confirm your bid</h3>
+            <p className="mt-3 text-sm text-stone-700">
+              Dear <b>{bidderDisplayName()}</b>, you are submitting a bid of{" "}
+              <b>${typeof bidAmount === "number" ? Number(bidAmount).toFixed(0) : "—"}</b>.
+            </p>
+            <p className="mt-2 text-xs text-stone-500">This action is deliberate and cannot be undone.</p>
+
+            <div className="mt-5 flex gap-2">
+              <button
+                className="inline-flex h-11 flex-1 items-center justify-center rounded-xl bg-[#F97316] px-5 text-sm font-semibold text-white hover:bg-[#EA580C] disabled:opacity-60"
+                type="button"
+                onClick={() => void submitBid()}
+                disabled={confirmBusy}
+              >
+                {confirmBusy ? "Submitting…" : "Submit bid"}
+              </button>
+              <button
+                className="inline-flex h-11 items-center justify-center rounded-xl border border-stone-200 bg-white px-5 text-sm font-semibold text-stone-900 hover:bg-stone-50 disabled:opacity-60"
+                type="button"
+                onClick={() => setConfirmOpen(false)}
+                disabled={confirmBusy}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
