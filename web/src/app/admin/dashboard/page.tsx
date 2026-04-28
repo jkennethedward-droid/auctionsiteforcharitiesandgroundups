@@ -31,6 +31,7 @@ export default function AdminDashboardPage() {
   const [busySite, setBusySite] = useState(false);
   const [busyAuction, setBusyAuction] = useState(false);
   const [busyClose, setBusyClose] = useState(false);
+  const [busySeed, setBusySeed] = useState(false);
 
   const [staffUsers, setStaffUsers] = useState<
     { uid: string; email?: string; name?: string; department?: string }[]
@@ -365,6 +366,31 @@ export default function AdminDashboardPage() {
     }
   }
 
+  async function seedDummyItems() {
+    if (!user) return;
+    setError(null);
+    setMessage(null);
+    setBusySeed(true);
+    try {
+      const idToken = await user.getIdToken(true);
+      const res = await fetch("/api/admin/seed-items", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({ count: 10 }),
+      });
+      const json = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(json?.error || "Failed to seed items.");
+      setMessage(`Seeded ${json.count} dummy items.`);
+    } catch (e: any) {
+      setError(e?.message ?? "Failed to seed items.");
+    } finally {
+      setBusySeed(false);
+    }
+  }
+
   async function promoteNextWinner() {
     if (!user) return;
     if (!selectedBidItemId) return;
@@ -648,6 +674,15 @@ export default function AdminDashboardPage() {
                 type="button"
               >
                 {busyClose ? "Closing…" : "Close auction + publish winners now"}
+              </button>
+
+              <button
+                className="inline-flex h-11 items-center justify-center rounded-xl border border-stone-200 bg-white px-5 text-sm font-semibold text-stone-900 hover:bg-stone-50 disabled:opacity-60"
+                onClick={seedDummyItems}
+                disabled={busySeed}
+                type="button"
+              >
+                {busySeed ? "Seeding…" : "Seed 10 dummy items"}
               </button>
             </div>
 
