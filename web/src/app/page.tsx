@@ -23,18 +23,56 @@ function msUntil(target: Date) {
   return target.getTime() - Date.now();
 }
 
-function formatCountdown(ms: number) {
+function getCountdownParts(ms: number) {
   const total = Math.max(0, Math.floor(ms / 1000));
   const days = Math.floor(total / 86400);
   const hours = Math.floor((total % 86400) / 3600);
   const mins = Math.floor((total % 3600) / 60);
   const secs = total % 60;
 
-  const dd = String(days).padStart(2, "0");
-  const hh = String(hours).padStart(2, "0");
-  const mm = String(mins).padStart(2, "0");
-  const ss = String(secs).padStart(2, "0");
-  return `${dd}D ${hh}Hr ${mm}Mn ${ss}s`;
+  return {
+    days: String(days).padStart(2, "0"),
+    hours: String(hours).padStart(2, "0"),
+    minutes: String(mins).padStart(2, "0"),
+    seconds: String(secs).padStart(2, "0"),
+  };
+}
+
+function FlipTile(props: { value: string; label: string; flashKey: number }) {
+  const { value, label, flashKey } = props;
+  const [flipping, setFlipping] = useState(false);
+
+  useEffect(() => {
+    setFlipping(true);
+    const t = window.setTimeout(() => setFlipping(false), 260);
+    return () => window.clearTimeout(t);
+  }, [flashKey, value]);
+
+  return (
+    <div className="w-[78px] sm:w-[86px]">
+      <div className="relative overflow-hidden rounded-2xl bg-white/10 ring-1 ring-white/10 shadow-[0_10px_30px_rgba(0,0,0,0.20)]">
+        {/* top half */}
+        <div className="h-10 sm:h-11 border-b border-white/10 bg-white/10" />
+        {/* bottom half */}
+        <div className="h-10 sm:h-11 bg-white/5" />
+
+        {/* value */}
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+          <div className="text-2xl sm:text-3xl font-semibold tabular-nums text-white">{value}</div>
+        </div>
+
+        {/* flip overlay */}
+        <div
+          className={`pointer-events-none absolute inset-0 origin-bottom bg-white/10 ${
+            flipping ? "animate-[flipDown_260ms_ease-in-out]" : "opacity-0"
+          }`}
+        />
+      </div>
+      <div className="mt-2 text-center text-[10px] font-semibold tracking-wide text-white/70">
+        {label}
+      </div>
+    </div>
+  );
 }
 
 export default function Home() {
@@ -81,9 +119,20 @@ export default function Home() {
   const itemsCount = items.length;
   const showPrices = auction.status === "open" || auction.status === "closed";
   const incrementLabel = "+$5.00";
+  const countdownParts = useMemo(() => {
+    if (timeLeftMs == null) return null;
+    return getCountdownParts(timeLeftMs);
+  }, [timeLeftMs]);
 
   return (
     <div className="flex flex-1 justify-center bg-[#F5F7FB] text-[#0B1F3A]">
+      <style>{`
+        @keyframes flipDown {
+          0% { transform: rotateX(0deg); opacity: 0.0; }
+          5% { opacity: 1; }
+          100% { transform: rotateX(-90deg); opacity: 0; }
+        }
+      `}</style>
       <main className="w-full max-w-6xl px-4 pb-16 sm:px-6">
         <section className="mt-6 overflow-hidden rounded-3xl bg-[#0B1F3A] shadow-sm">
           <div className="relative px-6 py-10 sm:px-10 sm:py-14">
@@ -138,15 +187,33 @@ export default function Home() {
                     <div className="mt-2 text-sm font-semibold text-white">
                       {formatSgtDate(closeAtDate)}
                     </div>
-                    <div className="mt-2 text-sm text-white/75">
-                      Time left:{" "}
-                      <span
-                        className={`relative inline-flex items-center rounded-xl px-3 py-1 font-semibold text-white tabular-nums ring-1 ring-white/10 transition-transform duration-150 ${
-                          countdownFlash ? "scale-[1.03]" : "scale-100"
-                        } bg-white/10 bg-[linear-gradient(to_right,rgba(255,255,255,0.16)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.16)_1px,transparent_1px)] bg-[size:14px_14px]`}
-                      >
-                        {timeLeftMs != null ? formatCountdown(timeLeftMs) : "—"}
-                      </span>
+                    <div className="mt-4 flex items-start justify-start gap-4 sm:gap-5">
+                      {countdownParts ? (
+                        <>
+                          <FlipTile
+                            value={countdownParts.days}
+                            label="DAYS"
+                            flashKey={nowTick}
+                          />
+                          <FlipTile
+                            value={countdownParts.hours}
+                            label="HOURS"
+                            flashKey={nowTick}
+                          />
+                          <FlipTile
+                            value={countdownParts.minutes}
+                            label="MINUTES"
+                            flashKey={nowTick}
+                          />
+                          <FlipTile
+                            value={countdownParts.seconds}
+                            label="SECONDS"
+                            flashKey={nowTick}
+                          />
+                        </>
+                      ) : (
+                        <div className="text-sm text-white/75">—</div>
+                      )}
                     </div>
                   </>
                 ) : (
