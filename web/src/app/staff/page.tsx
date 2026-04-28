@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { isSignInWithEmailLink, sendSignInLinkToEmail, signInWithEmailLink, signOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { getFirebaseAuth } from "@/lib/firebase/client";
@@ -17,7 +17,15 @@ function emailDomainAllowed(email: string, allowedDomains: string[]) {
 }
 
 export default function StaffPage() {
-  const firebaseAuth = getFirebaseAuth();
+  // Avoid initializing Firebase during server prerender/build.
+  const firebaseAuth = useMemo(() => {
+    if (typeof window === "undefined") return null;
+    try {
+      return getFirebaseAuth();
+    } catch {
+      return null;
+    }
+  }, []);
   const router = useRouter();
   const { user, loading } = useAuth();
   const [email, setEmail] = useState("");
@@ -46,6 +54,7 @@ export default function StaffPage() {
 
   useEffect(() => {
     const href = window.location.href;
+    if (!firebaseAuth) return;
     if (!isSignInWithEmailLink(firebaseAuth, href)) return;
 
     setStage("finishing");
@@ -77,6 +86,10 @@ export default function StaffPage() {
   }, []);
 
   async function sendStaffLink() {
+    if (!firebaseAuth) {
+      setError("Site is missing Firebase config. Ask admin to set NEXT_PUBLIC_FIREBASE_* in Vercel.");
+      return;
+    }
     setError(null);
     setMessage(null);
 
@@ -97,6 +110,10 @@ export default function StaffPage() {
   }
 
   async function saveStaffProfile() {
+    if (!firebaseAuth) {
+      setError("Site is missing Firebase config. Ask admin to set NEXT_PUBLIC_FIREBASE_* in Vercel.");
+      return;
+    }
     setError(null);
     setMessage(null);
 
@@ -132,6 +149,7 @@ export default function StaffPage() {
   }
 
   async function doSignOut() {
+    if (!firebaseAuth) return;
     await signOut(firebaseAuth);
     setStage("request");
     setEmail("");

@@ -16,7 +16,15 @@ const EMAIL_STORAGE_KEY = "gwh_login_email";
 const RETURN_TO_KEY = "gwh_return_to";
 
 export default function LoginClient() {
-  const firebaseAuth = getFirebaseAuth();
+  // Avoid initializing Firebase during server prerender/build.
+  const firebaseAuth = useMemo(() => {
+    if (typeof window === "undefined") return null;
+    try {
+      return getFirebaseAuth();
+    } catch {
+      return null;
+    }
+  }, []);
   const { user, loading } = useAuth();
   const searchParams = useSearchParams();
   const returnTo = useMemo(() => searchParams.get("returnTo") ?? "/", [searchParams]);
@@ -44,6 +52,7 @@ export default function LoginClient() {
 
   useEffect(() => {
     const href = window.location.href;
+    if (!firebaseAuth) return;
     if (!isSignInWithEmailLink(firebaseAuth, href)) return;
 
     setStage("finishing");
@@ -80,6 +89,10 @@ export default function LoginClient() {
   }, []);
 
   async function sendLink() {
+    if (!firebaseAuth) {
+      setError("Site is missing Firebase config. Ask admin to set NEXT_PUBLIC_FIREBASE_* in Vercel.");
+      return;
+    }
     setError(null);
     setMessage(null);
 
@@ -109,6 +122,10 @@ export default function LoginClient() {
   }
 
   async function saveProfile() {
+    if (!firebaseAuth) {
+      setError("Site is missing Firebase config. Ask admin to set NEXT_PUBLIC_FIREBASE_* in Vercel.");
+      return;
+    }
     setError(null);
     setMessage(null);
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { useRouter } from "next/navigation";
 import { getFirebaseAuth } from "@/lib/firebase/client";
@@ -8,7 +8,15 @@ import { useAuth } from "@/components/AuthProvider";
 import { getRoleClaim } from "@/lib/claims";
 
 export default function AdminPage() {
-  const firebaseAuth = getFirebaseAuth();
+  // Avoid initializing Firebase during server prerender/build.
+  const firebaseAuth = useMemo(() => {
+    if (typeof window === "undefined") return null;
+    try {
+      return getFirebaseAuth();
+    } catch {
+      return null;
+    }
+  }, []);
   const router = useRouter();
   const { user, loading } = useAuth();
   const [email, setEmail] = useState("");
@@ -19,6 +27,10 @@ export default function AdminPage() {
   const [authorized, setAuthorized] = useState(false);
 
   useEffect(() => {
+    if (!firebaseAuth) {
+      setError("Site is missing Firebase config. Ask admin to set NEXT_PUBLIC_FIREBASE_* in Vercel.");
+      return;
+    }
     if (loading) return;
     if (!user) return;
 
@@ -33,6 +45,10 @@ export default function AdminPage() {
   }, [loading, router, user]);
 
   async function login() {
+    if (!firebaseAuth) {
+      setError("Site is missing Firebase config. Ask admin to set NEXT_PUBLIC_FIREBASE_* in Vercel.");
+      return;
+    }
     setError(null);
     setMessage(null);
     setChecking(true);
@@ -56,6 +72,7 @@ export default function AdminPage() {
   }
 
   async function logout() {
+    if (!firebaseAuth) return;
     await signOut(firebaseAuth);
     setAuthorized(false);
     setMessage("Signed out.");
