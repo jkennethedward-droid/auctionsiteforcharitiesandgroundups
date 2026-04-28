@@ -36,8 +36,18 @@ function toCsv(rows: Record<string, unknown>[]) {
 }
 
 export async function GET(req: Request) {
-  const adminAuth = getAdminAuth();
-  const adminDb = getAdminDb();
+  let adminAuth: ReturnType<typeof getAdminAuth>;
+  let adminDb: ReturnType<typeof getAdminDb>;
+  try {
+    adminAuth = getAdminAuth();
+    adminDb = getAdminDb();
+  } catch (e: any) {
+    return jsonError(
+      e?.message ||
+        "Server is missing Firebase Admin credentials. Set FIREBASE_SERVICE_ACCOUNT_KEY in Vercel (Production + Preview) and redeploy.",
+      500,
+    );
+  }
   const token = getBearerToken(req);
   if (!token) return jsonError("Missing Authorization Bearer token.", 401);
 

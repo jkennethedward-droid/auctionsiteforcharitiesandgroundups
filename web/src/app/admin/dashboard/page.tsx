@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/components/AuthProvider";
 import { getRoleClaim } from "@/lib/claims";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import {
   Timestamp,
   doc,
@@ -22,7 +23,16 @@ import { uploadBrandAsset } from "@/lib/uploads";
 import { useAuction } from "@/components/AuctionProvider";
 import { subscribeAllItems, type ItemRow } from "@/lib/items";
 
+type ItemEditDraft = {
+  id: string;
+  title: string;
+  description: string;
+  startingBid: number;
+  isFeatured: boolean;
+};
+
 export default function AdminDashboardPage() {
+  const router = useRouter();
   const { user, loading } = useAuth();
   const [role, setRole] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -48,6 +58,10 @@ export default function AdminDashboardPage() {
   );
   const [closeAtLocalSgt, setCloseAtLocalSgt] = useState<string>("");
   const [items, setItems] = useState<ItemRow[]>([]);
+  const [itemsQuery, setItemsQuery] = useState("");
+  const [editing, setEditing] = useState<ItemEditDraft | null>(null);
+  const [busyItemSave, setBusyItemSave] = useState(false);
+  const [busyCsv, setBusyCsv] = useState(false);
   const [selectedBidItemId, setSelectedBidItemId] = useState<string>("");
   const [bids, setBids] = useState<
     {
@@ -89,6 +103,18 @@ export default function AdminDashboardPage() {
     if (!user) return;
     getRoleClaim(user, true).then((r) => setRole(r));
   }, [user]);
+
+  useEffect(() => {
+    if (loading) return;
+    // Treat "can view /admin/dashboard while not admin" as a security issue: redirect.
+    if (!user) {
+      router.replace("/admin");
+      return;
+    }
+    if (role && role !== "admin") {
+      router.replace("/admin");
+    }
+  }, [loading, role, router, user]);
 
   useEffect(() => {
     if (!site) return;
@@ -241,6 +267,17 @@ export default function AdminDashboardPage() {
     return d;
   }, [closeAtLocalSgt]);
 
+  const filteredItems = useMemo(() => {
+    const q = itemsQuery.trim().toLowerCase();
+    if (!q) return items;
+    return items.filter((it) => {
+      const title = String(it.title || "").toLowerCase();
+      const id = String(it.id || "").toLowerCase();
+      const uploader = String(it.uploaderName || "").toLowerCase();
+      return title.includes(q) || id.includes(q) || uploader.includes(q);
+    });
+  }, [items, itemsQuery]);
+
   useEffect(() => {
     const firestore = getFirestoreDb();
     if (!user) return;
@@ -299,8 +336,8 @@ export default function AdminDashboardPage() {
   }
 
   if (loading) return <div className="p-8 text-sm">Loading…</div>;
-  if (!user) return <div className="p-8 text-sm">Please sign in at /admin.</div>;
-  if (role !== "admin") return <div className="p-8 text-sm">Not authorised as admin.</div>;
+  if (!user) return <div className="p-8 text-sm">Redirecting…</div>;
+  if (role !== "admin") return <div className="p-8 text-sm">Redirecting…</div>;
 
   async function saveAuctionControl() {
     setError(null);
@@ -339,6 +376,73 @@ export default function AdminDashboardPage() {
       setMessage(next ? "Marked as featured." : "Removed from featured.");
     } catch (e: any) {
       setError(e?.message ?? "Failed to update featured flag.");
+    }
+  }
+
+  function startEditItem(it: ItemRow) {
+    setError(null);
+    setMessage(null);
+    setEditing({
+      id: it.id,
+      title: String(it.title || ""),
+      description: String(it.description || ""),
+      startingBid: Number(it.startingBid ?? 0),
+      isFeatured: Boolean(it.isFeatured),
+    });
+  }
+
+  async function saveEditingItem() {
+    if (!editing) return;
+    setError(null);
+    setMessage(null);
+    setBusyItemSave(true);
+    try {
+      const t = editing.title.trim();
+      if (!t) throw new Error("Title is required.");
+      const sb = Number(editing.startingBid);
+      if (!Number.isFinite(sb) || sb <= 0) throw new Error("Starting bid must be a positive number.");
+
+      const firestore = getFirestoreDb();
+      await updateDoc(doc(firestore, "items", editing.id), {
+        title: t,
+        description: editing.description.trim(),
+        startingBid: sb,
+        isFeatured: !!editing.isFeatured,
+        // Keep currentHighestBid consistent if it was empty/invalid.
+        currentHighestBid: sb,
+      });
+      setMessage("Item saved.");
+      setEditing(null);
+    } catch (e: any) {
+      setError(e?.message ?? "Failed to save item.");
+    } finally {
+      setBusyItemSave(false);
+    }
+  }
+
+  async function importItemsCsv(file: File) {
+    if (!user) return;
+    setError(null);
+    setMessage(null);
+    setBusyCsv(true);
+    try {
+      const text = await file.text();
+      const idToken = await user.getIdToken(true);
+      const res = await fetch("/api/admin/import-items", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({ csv: text }),
+      });
+      const json = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(json?.error || "CSV import failed.");
+      setMessage(`CSV import ok. Created: ${json.created || 0}, updated: ${json.updated || 0}, skipped: ${json.skipped || 0}.`);
+    } catch (e: any) {
+      setError(e?.message ?? "CSV import failed.");
+    } finally {
+      setBusyCsv(false);
     }
   }
 
@@ -762,6 +866,95 @@ export default function AdminDashboardPage() {
         </section>
 
         <section className="mt-8 rounded-2xl bg-white p-6 shadow-sm">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-sm font-semibold">Items (admin)</h2>
+              <p className="mt-1 text-xs text-stone-500">
+                Edit item details manually, or import a CSV to create/update items in bulk.
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <input
+                className="h-10 w-full rounded-xl border border-stone-200 px-3 text-sm outline-none focus:border-[#F97316] sm:w-72"
+                placeholder="Search by title, id, uploader…"
+                value={itemsQuery}
+                onChange={(e) => setItemsQuery(e.target.value)}
+              />
+
+              <input
+                id="admin-items-csv"
+                className="sr-only"
+                type="file"
+                accept=".csv,text/csv"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) void importItemsCsv(f);
+                  e.currentTarget.value = "";
+                }}
+                disabled={busyCsv}
+              />
+              <label
+                htmlFor="admin-items-csv"
+                className="inline-flex h-10 cursor-pointer items-center justify-center rounded-xl bg-[#F97316] px-4 text-sm font-semibold text-white hover:bg-[#EA580C] disabled:opacity-60"
+                aria-disabled={busyCsv}
+              >
+                {busyCsv ? "Importing…" : "Import CSV…"}
+              </label>
+            </div>
+          </div>
+
+          <div className="mt-4 overflow-auto rounded-xl border border-stone-200">
+            <table className="min-w-[980px] w-full text-left text-sm">
+              <thead className="bg-stone-50 text-xs text-stone-600">
+                <tr>
+                  <th className="px-3 py-2">ID</th>
+                  <th className="px-3 py-2">Title</th>
+                  <th className="px-3 py-2">Starting bid</th>
+                  <th className="px-3 py-2">Featured</th>
+                  <th className="px-3 py-2">Uploader</th>
+                  <th className="px-3 py-2"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredItems.length ? (
+                  filteredItems.map((it) => (
+                    <tr key={it.id} className="border-t border-stone-100">
+                      <td className="px-3 py-2 font-mono text-xs">{it.id}</td>
+                      <td className="px-3 py-2 font-semibold">{it.title}</td>
+                      <td className="px-3 py-2">${Number(it.startingBid ?? 0).toFixed(0)}</td>
+                      <td className="px-3 py-2">{it.isFeatured ? "Yes" : "No"}</td>
+                      <td className="px-3 py-2 text-xs text-stone-600">{it.uploaderName}</td>
+                      <td className="px-3 py-2">
+                        <button
+                          className="inline-flex h-9 items-center justify-center rounded-xl border border-stone-200 bg-white px-3 text-xs font-semibold text-stone-900 hover:bg-stone-50"
+                          type="button"
+                          onClick={() => startEditItem(it)}
+                        >
+                          Edit
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td className="px-3 py-6 text-sm text-stone-600" colSpan={6}>
+                      No items found.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="mt-3 text-xs text-stone-500">
+            CSV columns supported: <code>id</code> (optional), <code>title</code> (required),{" "}
+            <code>description</code>, <code>startingBid</code>, <code>isFeatured</code>,{" "}
+            <code>photoUrls</code> (semicolon-separated).
+          </div>
+        </section>
+
+        <section className="mt-8 rounded-2xl bg-white p-6 shadow-sm">
           <h2 className="text-sm font-semibold">Bid log</h2>
           <p className="mt-1 text-xs text-stone-500">
             Admin-only view of bids (sorted by amount desc). Winner row is highlighted. Use “Remove Winner” to promote the next highest bid.
@@ -1010,6 +1203,98 @@ export default function AdminDashboardPage() {
           </div>
         </section>
       </div>
+
+      {editing ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4">
+          <div className="w-full max-w-2xl rounded-2xl bg-white p-6 shadow-xl">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <div className="text-xs text-stone-500">Editing</div>
+                <div className="mt-1 font-mono text-xs">{editing.id}</div>
+                <h3 className="mt-2 text-lg font-semibold">Edit item</h3>
+              </div>
+              <button
+                className="inline-flex h-10 items-center justify-center rounded-xl border border-stone-200 bg-white px-4 text-sm font-semibold text-stone-900 hover:bg-stone-50"
+                type="button"
+                onClick={() => setEditing(null)}
+                disabled={busyItemSave}
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="mt-5 grid gap-4">
+              <div>
+                <label className="text-sm font-medium">Title</label>
+                <input
+                  className="mt-1 h-11 w-full rounded-xl border border-stone-200 px-3 text-sm outline-none focus:border-[#F97316]"
+                  value={editing.title}
+                  onChange={(e) => setEditing((s) => (s ? { ...s, title: e.target.value } : s))}
+                  disabled={busyItemSave}
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-medium">Description</label>
+                <textarea
+                  className="mt-1 w-full rounded-xl border border-stone-200 px-3 py-2 text-sm outline-none focus:border-[#F97316]"
+                  value={editing.description}
+                  onChange={(e) => setEditing((s) => (s ? { ...s, description: e.target.value } : s))}
+                  rows={6}
+                  disabled={busyItemSave}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium">Starting bid</label>
+                  <input
+                    className="mt-1 h-11 w-full rounded-xl border border-stone-200 px-3 text-sm outline-none focus:border-[#F97316]"
+                    value={editing.startingBid}
+                    onChange={(e) =>
+                      setEditing((s) =>
+                        s ? { ...s, startingBid: e.target.value ? Number(e.target.value) : 0 } : s,
+                      )
+                    }
+                    inputMode="numeric"
+                    disabled={busyItemSave}
+                  />
+                </div>
+
+                <label className="flex items-end gap-2">
+                  <input
+                    type="checkbox"
+                    checked={editing.isFeatured}
+                    onChange={(e) => setEditing((s) => (s ? { ...s, isFeatured: e.target.checked } : s))}
+                    disabled={busyItemSave}
+                    className="h-4 w-4"
+                  />
+                  <span className="text-sm font-medium">Featured</span>
+                </label>
+              </div>
+
+              <div className="flex gap-2">
+                <button
+                  className="inline-flex h-11 items-center justify-center rounded-xl bg-[#F97316] px-5 text-sm font-semibold text-white hover:bg-[#EA580C] disabled:opacity-60"
+                  type="button"
+                  onClick={() => void saveEditingItem()}
+                  disabled={busyItemSave}
+                >
+                  {busyItemSave ? "Saving…" : "Save"}
+                </button>
+                <button
+                  className="inline-flex h-11 items-center justify-center rounded-xl border border-stone-200 bg-white px-5 text-sm font-semibold text-stone-900 hover:bg-stone-50 disabled:opacity-60"
+                  type="button"
+                  onClick={() => setEditing(null)}
+                  disabled={busyItemSave}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

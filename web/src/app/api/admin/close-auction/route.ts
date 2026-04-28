@@ -16,7 +16,16 @@ function getBearerToken(req: Request): string | null {
 }
 
 export async function POST(req: Request) {
-  const adminAuth = getAdminAuth();
+  let adminAuth: ReturnType<typeof getAdminAuth>;
+  try {
+    adminAuth = getAdminAuth();
+  } catch (e: any) {
+    return jsonError(
+      e?.message ||
+        "Server is missing Firebase Admin credentials. Set FIREBASE_SERVICE_ACCOUNT_KEY in Vercel (Production + Preview) and redeploy.",
+      500,
+    );
+  }
   const token = getBearerToken(req);
   if (!token) return jsonError("Missing Authorization Bearer token.", 401);
 
